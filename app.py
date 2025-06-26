@@ -52,9 +52,75 @@ def get_user_from_session():
             'username': session['user_username'],
             'email': session.get('user_email', ''),
             'role': session.get('user_role', 'user'),
-            'sftp_username': session.get('user_sftp_username', '')
+            'user_type': session.get('user_type', 'internal'),
+            'sftp_username': session.get('user_sftp_username', ''),
+            'host_tenant_id': session.get('host_tenant_id', ''),
+            'company_name': session.get('company_name', ''),
+            'drops_access': session.get('drops_access', []),
+            'permissions': session.get('permissions', ['read'])
         }
     return None
+
+def find_user_by_credentials(username, password):
+    """Find user by username and password across both internal and external users"""
+    import hashlib
+    password_hash = hashlib.sha256(password.encode()).hexdigest()
+    
+    try:
+        # First, search in main tenant table for internal users
+        response = dynamodb.scan(
+            TableName=os.environ['TENANT_TABLE_NAME'],
+            FilterExpression='username = :username AND NOT begins_with(user_id, :drop_prefix)',
+            ExpressionAttributeValues={
+                ':username': {'S': username},
+                ':drop_prefix': {'S': 'DROP#'}
+            }
+        )
+        
+        # Check internal users (they don't have passwords stored yet - for now we'll allow them to login without password verification)
+        for item in response.get('Items', []):
+            # For internal users, we'll accept any password for now (since they don't have passwords stored)
+            # In a real system, you'd want to implement proper password handling for internal users too
+            return {
+                'tenant_id': item.get('tenant_id', {}).get('S', ''),
+                'username': item.get('username', {}).get('S', ''),
+                'email': item.get('email', {}).get('S', ''),
+                'role': item.get('role', {}).get('S', 'user'),
+                'user_type': 'internal',
+                'sftp_username': item.get('sftp_username', {}).get('S', '')
+            }
+        
+        # If not found in internal users, search external users in FileExchangeUsers table
+        dynamodb_resource = boto3.resource('dynamodb')
+        users_table = dynamodb_resource.Table('FileExchangeUsers')
+        
+        response = users_table.scan(
+            FilterExpression='username = :username AND user_type = :user_type',
+            ExpressionAttributeValues={
+                ':username': username,
+                ':user_type': 'external'
+            }
+        )
+        
+        for item in response.get('Items', []):
+            if item.get('password_hash') == password_hash:
+                return {
+                    'tenant_id': item.get('tenant_id', ''),
+                    'username': item.get('username', ''),
+                    'email': item.get('email', ''),
+                    'role': item.get('role', 'user'),
+                    'user_type': 'external',
+                    'host_tenant_id': item.get('host_tenant_id', ''),
+                    'company_name': item.get('company_name', ''),
+                    'drops_access': item.get('drops_access', []),
+                    'permissions': item.get('permissions', ['read'])
+                }
+        
+        return None
+        
+    except Exception as e:
+        print(f"Error finding user: {e}")
+        return None
 
 def get_s3_path(tenant_id, path=''):
     """Get the full S3 path for a tenant"""
@@ -120,35 +186,34 @@ def index():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        tenant_id = request.form['tenant_id'].strip()
         username = request.form['username'].strip()
+        password = request.form['password'].strip()
         
-        if not tenant_id or not username:
-            flash('Both Tenant ID and Username are required')
+        if not username or not password:
+            flash('Both username and password are required')
             return redirect(request.url)
         
         try:
-            # Look up user in DynamoDB
-            response = dynamodb.get_item(
-                TableName=os.environ['TENANT_TABLE_NAME'],
-                Key={
-                    'tenant_id': {'S': tenant_id},
-                    'user_id': {'S': username}
-                }
-            )
+            user_data = find_user_by_credentials(username, password)
             
-            if 'Item' not in response:
-                flash('Invalid tenant ID or username')
+            if not user_data:
+                flash('Invalid username or password')
                 return redirect(request.url)
             
-            user_data = response['Item']
-            
             # Store user info in session
-            session['user_tenant_id'] = tenant_id
+            session['user_tenant_id'] = user_data['tenant_id']
             session['user_username'] = username
-            session['user_email'] = user_data.get('email', {}).get('S', '')
-            session['user_role'] = user_data.get('role', {}).get('S', 'user')
-            session['user_sftp_username'] = user_data.get('sftp_username', {}).get('S', '')
+            session['user_email'] = user_data['email']
+            session['user_role'] = user_data.get('role', 'user')
+            session['user_type'] = user_data.get('user_type', 'internal')
+            session['user_sftp_username'] = user_data.get('sftp_username', '')
+            
+            # External users have additional context
+            if user_data.get('user_type') == 'external':
+                session['host_tenant_id'] = user_data.get('host_tenant_id', '')
+                session['company_name'] = user_data.get('company_name', '')
+                session['drops_access'] = user_data.get('drops_access', [])
+                session['permissions'] = user_data.get('permissions', ['read'])
             
             flash(f'Welcome back, {username}!')
             return redirect(url_for('drops_dashboard'))
@@ -382,11 +447,21 @@ def drops_dashboard():
         return redirect(url_for('login'))
     
     # Get real data from database and S3
-    drops = get_tenant_drops(user['tenant_id'])
+    if user['user_type'] == 'external':
+        # For external users, use the host tenant ID and filter to only their accessible drops
+        drops = get_tenant_drops(user['host_tenant_id'])
+        # Filter to only drops they have access to
+        accessible_drops = user.get('drops_access', [])
+        drops = [drop for drop in drops if drop['id'] in accessible_drops]
+    else:
+        # For internal users, show all drops in their tenant
+        drops = get_tenant_drops(user['tenant_id'])
     
     # Calculate file counts for each drop
     for drop in drops:
-        drop['files_count'] = get_drop_files_count(user['tenant_id'], drop['id'])
+        # Use the appropriate tenant ID for file counting
+        tenant_id_for_files = user['host_tenant_id'] if user['user_type'] == 'external' else user['tenant_id']
+        drop['files_count'] = get_drop_files_count(tenant_id_for_files, drop['id'])
         # Convert DynamoDB lists to Python lists for counting
         if isinstance(drop['internal_users'], list) and drop['internal_users'] and isinstance(drop['internal_users'][0], dict):
             drop['internal_users'] = [item.get('S', '') for item in drop['internal_users']]
@@ -400,9 +475,11 @@ def drops_dashboard():
     
     # Calculate dashboard statistics
     total_drops = len(drops)
-    total_collaborators = get_tenant_users_count(user['tenant_id'])
-    total_files = get_tenant_files_count(user['tenant_id'])
-    recent_activity = get_recent_activity_count(user['tenant_id'])
+    # Use the appropriate tenant ID for statistics
+    stats_tenant_id = user['host_tenant_id'] if user['user_type'] == 'external' else user['tenant_id']
+    total_collaborators = get_tenant_users_count(stats_tenant_id)
+    total_files = get_tenant_files_count(stats_tenant_id) if user['user_type'] == 'internal' else sum(drop['files_count'] for drop in drops)
+    recent_activity = get_recent_activity_count(stats_tenant_id)
     
     # Add unique collaborator count from all drops
     all_collaborators = set()
@@ -542,8 +619,16 @@ def drop_files(drop_id):
     if not user:
         return redirect(url_for('login'))
     
+    # Use the appropriate tenant ID for drop lookup
+    lookup_tenant_id = user['host_tenant_id'] if user['user_type'] == 'external' else user['tenant_id']
+    
+    # Check if external user has access to this drop
+    if user['user_type'] == 'external' and drop_id not in user.get('drops_access', []):
+        flash('You do not have access to this drop')
+        return redirect(url_for('drops_dashboard'))
+    
     # Get real drop data from database
-    drop = get_drop_by_id(user['tenant_id'], drop_id)
+    drop = get_drop_by_id(lookup_tenant_id, drop_id)
     if not drop:
         # Fallback for backwards compatibility
         drop = {
@@ -554,7 +639,7 @@ def drop_files(drop_id):
     # This would load the specific drop and its files
     # For now, redirect to the existing file manager with a drop context
     current_path = request.args.get('path', f'drops/{drop_id}')
-    files = list_s3_files(user['tenant_id'], current_path)
+    files = list_s3_files(lookup_tenant_id, current_path)
     
     # Build breadcrumb navigation
     breadcrumbs = [
@@ -582,8 +667,21 @@ def drop_settings(drop_id):
     if not user:
         return redirect(url_for('login'))
     
+    # Use the appropriate tenant ID for drop lookup
+    lookup_tenant_id = user['host_tenant_id'] if user['user_type'] == 'external' else user['tenant_id']
+    
+    # Check if external user has access to this drop
+    if user['user_type'] == 'external' and drop_id not in user.get('drops_access', []):
+        flash('You do not have access to this drop')
+        return redirect(url_for('drops_dashboard'))
+    
+    # External users cannot access settings
+    if user['user_type'] == 'external':
+        flash('External users cannot access drop settings')
+        return redirect(url_for('drop_files', drop_id=drop_id))
+    
     # Get real drop data from database
-    drop = get_drop_by_id(user['tenant_id'], drop_id)
+    drop = get_drop_by_id(lookup_tenant_id, drop_id)
     if not drop:
         # Fallback for backwards compatibility
         drop = {

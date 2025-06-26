@@ -22,30 +22,30 @@
         <form class="mt-8 space-y-6" method="POST">
             <div class="space-y-4">
                 <div>
-                    <label for="tenant_id" class="block text-sm font-medium text-gray-700">
-                        Company Workspace ID
-                    </label>
-                    <div class="mt-1">
-                        <input id="tenant_id" name="tenant_id" type="text" required 
-                               class="input-field appearance-none relative block w-full px-3 py-2 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                               placeholder="Enter your company workspace ID">
-                    </div>
-                    <p class="mt-1 text-xs text-gray-500">
-                        This was provided when your company workspace was created
-                    </p>
-                </div>
-                
-                <div>
                     <label for="username" class="block text-sm font-medium text-gray-700">
-                        Your Name
+                        Username
                     </label>
                     <div class="mt-1">
                         <input id="username" name="username" type="text" required 
                                class="input-field appearance-none relative block w-full px-3 py-2 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                               placeholder="Enter your name">
+                               placeholder="Enter your username">
                     </div>
                     <p class="mt-1 text-xs text-gray-500">
-                        Use the name provided to you by your company administrator
+                        The username provided to you during account setup
+                    </p>
+                </div>
+                
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700">
+                        Password
+                    </label>
+                    <div class="mt-1">
+                        <input id="password" name="password" type="password" required 
+                               class="input-field appearance-none relative block w-full px-3 py-2 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                               placeholder="Enter your password">
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500">
+                        The password you created when accepting your invitation
                     </p>
                 </div>
             </div>
@@ -87,9 +87,10 @@
         <div class="mt-6 p-4 bg-gray-50 rounded-lg">
             <h3 class="text-sm font-medium text-gray-900 mb-2">Need help signing in?</h3>
             <ul class="text-xs text-gray-600 space-y-1">
-                <li>• Your company administrator can provide your workspace ID</li>
-                <li>• Use the exact name given to you during account setup</li>
-                <li>• Contact support if you're having trouble accessing your files</li>
+                <li>• Use the username and password from your invitation email</li>
+                <li>• External users: check the welcome email after accepting your invitation</li>
+                <li>• Internal users: contact your company administrator for login details</li>
+                <li>• Forgot your credentials? Contact the person who invited you</li>
             </ul>
         </div>
     </div>

@@ -119,6 +119,9 @@ class InvitationSystem:
             }
         )
         
+        # Send welcome email with login credentials
+        self._send_welcome_email(invitation, user_info)
+        
         return True
     
     def _create_internal_user_access(self, invitation, user_info):
@@ -145,11 +148,16 @@ class InvitationSystem:
         
         user_id = f"external-{str(uuid.uuid4())}"
         
+        # Hash password for security
+        import hashlib
+        password_hash = hashlib.sha256(user_info['password'].encode()).hexdigest()
+        
         user_record = {
             'tenant_id': f"external-{invitation['tenant_id']}",
             'user_id': user_id,
             'email': invitation['invitee_email'],
             'username': user_info['username'],
+            'password_hash': password_hash,
             'company_name': invitation['company_name'],
             'user_type': 'external',
             'host_tenant_id': invitation['tenant_id'],
@@ -220,6 +228,67 @@ dave@fusedata.co
 ---
 This email was sent because {invitation['inviter_email']} invited you to collaborate via FTPme.
 If you believe this was sent in error, please contact dave@fusedata.co."""
+        
+        self._send_email(invitation['invitee_email'], subject, body)
+    
+    def _send_welcome_email(self, invitation, user_info):
+        """Send welcome email with login credentials after account creation"""
+        
+        subject = f"Welcome to FTPme - Your Account is Ready!"
+        
+        if invitation['user_type'] == 'external':
+            body = f"""Welcome to FTPme, {user_info['username']}!
+
+Your account has been successfully created and you now have secure access to the shared files.
+
+LOGIN CREDENTIALS:
+• Website: https://ftpme.com/login
+• Username: {user_info['username']}
+• Password: {user_info['password']}
+
+WHAT YOU CAN ACCESS:
+• Workspace: {invitation.get('drop_name', 'Collaboration Space')}
+• Permissions: {', '.join(invitation['permissions'])}
+• Invited by: {invitation['inviter_email']}
+• Your company: {invitation['company_name']}
+
+GETTING STARTED:
+1. Visit https://ftpme.com/login
+2. Enter your username and password above
+3. You'll see the shared files in your dashboard
+4. Use the file browser to view, download, or upload files (based on your permissions)
+
+SECURITY NOTICE:
+• Please keep your login credentials secure
+• Your access is limited to the specific files you've been invited to
+• FTPme uses enterprise-grade security to protect all shared data
+
+If you need help or have questions about the shared files, please contact {invitation['inviter_email']} directly.
+
+Welcome to secure file collaboration!
+
+Best regards,
+Dave Findlay
+Fuse Data & Analytics
+dave@fusedata.co
+
+---
+This email contains your login credentials. Please store them securely and delete this email after logging in."""
+        else:
+            # Internal user welcome
+            body = f"""Welcome to FTPme, {user_info['username']}!
+
+Your internal account has been successfully created.
+
+LOGIN CREDENTIALS:
+• Website: https://ftpme.com/login
+• Username: {user_info['username']}
+• Role: {invitation['role'].title()}
+
+You now have access to the {invitation.get('drop_name', 'collaboration space')} and can start collaborating with your team.
+
+Best regards,
+The FTPme Team"""
         
         self._send_email(invitation['invitee_email'], subject, body)
     
