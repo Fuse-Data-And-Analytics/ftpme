@@ -12,6 +12,14 @@ import tempfile
 from datetime import datetime
 import mimetypes
 
+# Set up development environment if running in debug mode
+if os.environ.get('DEBUG', 'False').lower() == 'true' or __name__ == '__main__':
+    try:
+        from dev_config import setup_dev_environment
+        setup_dev_environment()
+    except ImportError:
+        print("⚠️  dev_config.py not found - using default settings")
+
 app = Flask(__name__)
 # Use a fixed secret key for development (change for production)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-change-for-production')

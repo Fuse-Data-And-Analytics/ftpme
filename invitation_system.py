@@ -3,6 +3,7 @@ import boto3
 import json
 import uuid
 import smtplib
+import os
 from datetime import datetime, timedelta
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -13,6 +14,18 @@ class InvitationSystem:
         self.ses = boto3.client('ses')
         self.invitations_table = self.dynamodb.Table('FileExchangeInvitations')
         self.users_table = self.dynamodb.Table('FileExchangeUsers')
+        
+        # Email configuration based on environment
+        self.is_development = os.environ.get('FLASK_ENV') == 'development' or os.environ.get('DEBUG', 'False').lower() == 'true'
+        
+        if self.is_development:
+            # For development: use verified email or mock
+            self.sender_email = os.environ.get('SES_VERIFIED_EMAIL', 'test@example.com')
+            self.mock_email = os.environ.get('MOCK_EMAIL', 'False').lower() == 'true'
+        else:
+            # For production: use custom domain
+            self.sender_email = 'noreply@ftpme.com'
+            self.mock_email = False
         
     def invite_internal_user(self, tenant_id, drop_id, inviter_email, invitee_email, role='member'):
         """Invite an internal company user to a drop"""
@@ -199,20 +212,38 @@ class InvitationSystem:
         self._send_email(invitation['invitee_email'], subject, body)
     
     def _send_email(self, to_email, subject, body):
-        """Send email via SES"""
+        """Send email via SES or mock for development"""
+        
+        if self.mock_email:
+            # Mock email for development
+            print("🔥 MOCK EMAIL SENT 🔥")
+            print(f"TO: {to_email}")
+            print(f"FROM: {self.sender_email}")
+            print(f"SUBJECT: {subject}")
+            print(f"BODY:\n{body}")
+            print("="*60)
+            return
         
         try:
             response = self.ses.send_email(
-                Source='noreply@ftpme.com',
+                Source=self.sender_email,
                 Destination={'ToAddresses': [to_email]},
                 Message={
                     'Subject': {'Data': subject},
                     'Body': {'Text': {'Data': body}}
                 }
             )
-            print(f"Email sent to {to_email}: {response['MessageId']}")
+            print(f"✅ Email sent to {to_email}: {response['MessageId']}")
         except Exception as e:
-            print(f"Failed to send email to {to_email}: {e}")
+            print(f"❌ Failed to send email to {to_email}: {e}")
+            if self.is_development:
+                # For development, also print the email content
+                print(f"📧 EMAIL CONTENT (would have been sent):")
+                print(f"TO: {to_email}")
+                print(f"FROM: {self.sender_email}")
+                print(f"SUBJECT: {subject}")
+                print(f"BODY:\n{body}")
+                print("="*60)
 
 # Example usage
 if __name__ == "__main__":
