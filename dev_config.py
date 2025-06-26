@@ -15,11 +15,11 @@ def setup_dev_environment():
     
     # Email configuration for testing
     # Option 1: Mock emails (just print to console) - RECOMMENDED FOR TESTING
-    # os.environ['MOCK_EMAIL'] = 'True'
+    # os.environ['MOCK_EMAIL'] = 'True'  # Back to mock emails for testing
     
-    # Option 2: Use SES with verified email (now that email is verified!)
+    # Option 2: Use SES with business email (much better for deliverability!)
     os.environ['MOCK_EMAIL'] = 'False'
-    os.environ['SES_VERIFIED_EMAIL'] = 'findlay.dave@gmail.com'  # Verified email address
+    os.environ['SES_VERIFIED_EMAIL'] = 'dave@fusedata.co'  # Business email address
     
     print("🔧 Development environment configured:")
     print(f"   FLASK_ENV: {os.environ.get('FLASK_ENV')}")

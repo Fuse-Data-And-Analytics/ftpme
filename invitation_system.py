@@ -188,26 +188,38 @@ class InvitationSystem:
     def _send_external_invitation_email(self, invitation):
         """Send invitation email to external user"""
         
-        subject = f"Secure file sharing invitation from {invitation['inviter_email']}"
+        subject = f"File Sharing Invitation from {invitation['inviter_email'].split('@')[0]}"
         
-        body = f"""
-        Hi there,
-        
-        {invitation['inviter_email']} has invited you to securely share files on FTPme.
-        
-        Drop: {invitation.get('drop_name', 'Collaboration Space')}
-        Your company: {invitation['company_name']}
-        Access level: {', '.join(invitation['permissions'])}
-        
-        Click here to get started: https://ftpme.com/accept-invitation/{invitation['invitation_id']}
-        
-        FTPme is a secure business file sharing platform. No software to install - just click the link above.
-        
-        This invitation expires in 30 days.
-        
-        Best regards,
-        The FTPme Team
-        """
+        body = f"""Hello,
+
+You've been invited to securely collaborate on a file sharing workspace.
+
+INVITATION DETAILS:
+• Invited by: {invitation['inviter_email']}
+• Your company: {invitation['company_name']}
+• Workspace: {invitation.get('drop_name', 'Collaboration Space')}
+• Access permissions: {', '.join(invitation['permissions'])}
+
+NEXT STEPS:
+1. Click this secure link: https://ftpme.com/accept-invitation/{invitation['invitation_id']}
+2. Create your account (takes 2 minutes)
+3. Start collaborating securely
+
+ABOUT FTPME:
+FTPme is a professional file exchange platform trusted by businesses for secure document sharing. No software installation required - everything works in your web browser.
+
+This invitation expires in 30 days for security purposes.
+
+If you have questions, please contact {invitation['inviter_email']} directly.
+
+Best regards,
+Dave Findlay
+Fuse Data & Analytics
+dave@fusedata.co
+
+---
+This email was sent because {invitation['inviter_email']} invited you to collaborate via FTPme.
+If you believe this was sent in error, please contact dave@fusedata.co."""
         
         self._send_email(invitation['invitee_email'], subject, body)
     
