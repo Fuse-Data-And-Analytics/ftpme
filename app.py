@@ -6,6 +6,7 @@ from werkzeug.utils import secure_filename
 from werkzeug.exceptions import RequestEntityTooLarge
 from create_tenant import TenantManager
 from manage_users import UserManager
+from invitation_system import InvitationSystem
 from botocore.exceptions import ClientError
 import tempfile
 from datetime import datetime
@@ -669,6 +670,141 @@ def logout():
     session.clear()
     flash('You have been logged out successfully.')
     return redirect(url_for('index'))
+
+# External User Invitation Routes
+@app.route('/api/invite-external-user', methods=['POST'])
+def invite_external_user():
+    """Send invitation to external user"""
+    user = get_user_from_session()
+    if not user:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        data = request.get_json()
+        email = data.get('email', '').strip()
+        company_name = data.get('company_name', '').strip()
+        drop_ids = data.get('drop_ids', [])  # List of drop IDs to invite to
+        permissions = data.get('permissions', ['read'])
+        message = data.get('message', '').strip()
+        
+        if not email or not company_name:
+            return jsonify({'error': 'Email and company name are required'}), 400
+        
+        if not drop_ids:
+            return jsonify({'error': 'At least one drop must be selected'}), 400
+        
+        # Initialize invitation system
+        invitation_system = InvitationSystem()
+        
+        # Send invitations for each selected drop
+        invitation_ids = []
+        for drop_id in drop_ids:
+            invitation_id = invitation_system.invite_external_user(
+                tenant_id=user['tenant_id'],
+                drop_id=drop_id,
+                inviter_email=user['email'],
+                invitee_email=email,
+                company_name=company_name,
+                permissions=permissions
+            )
+            invitation_ids.append(invitation_id)
+        
+        return jsonify({
+            'success': True, 
+            'message': f'Invitation sent to {email}',
+            'invitation_ids': invitation_ids
+        })
+        
+    except Exception as e:
+        print(f"Error sending invitation: {e}")
+        return jsonify({'error': f'Failed to send invitation: {str(e)}'}), 500
+
+@app.route('/accept-invitation/<invitation_id>')
+def accept_invitation_page(invitation_id):
+    """Landing page for external users to accept invitations"""
+    try:
+        # Get invitation details
+        invitation_system = InvitationSystem()
+        dynamodb_resource = boto3.resource('dynamodb')
+        invitations_table = dynamodb_resource.Table('FileExchangeInvitations')
+        
+        response = invitations_table.get_item(Key={'invitation_id': invitation_id})
+        
+        if 'Item' not in response:
+            flash('Invitation not found or expired')
+            return render_template('invitation_error.html', error='Invitation not found')
+        
+        invitation = response['Item']
+        
+        # Check if invitation is still valid
+        if invitation['status'] != 'pending':
+            flash('This invitation has already been processed')
+            return render_template('invitation_error.html', error='Invitation already processed')
+        
+        from datetime import datetime
+        if datetime.fromisoformat(invitation['expires_at']) < datetime.utcnow():
+            flash('This invitation has expired')
+            return render_template('invitation_error.html', error='Invitation expired')
+        
+        return render_template('accept_invitation.html', invitation=invitation)
+        
+    except Exception as e:
+        print(f"Error loading invitation: {e}")
+        flash('Error loading invitation')
+        return render_template('invitation_error.html', error='Error loading invitation')
+
+@app.route('/accept-invitation/<invitation_id>', methods=['POST'])
+def accept_invitation(invitation_id):
+    """Process invitation acceptance"""
+    try:
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '').strip()  # For external user account
+        
+        if not username or not password:
+            flash('Username and password are required')
+            return redirect(url_for('accept_invitation_page', invitation_id=invitation_id))
+        
+        # Accept the invitation
+        invitation_system = InvitationSystem()
+        user_info = {
+            'username': username,
+            'password': password
+        }
+        
+        invitation_system.accept_invitation(invitation_id, user_info)
+        
+        flash('Invitation accepted successfully! You can now access the shared files.')
+        return render_template('invitation_accepted.html', username=username)
+        
+    except Exception as e:
+        print(f"Error accepting invitation: {e}")
+        flash(f'Error accepting invitation: {str(e)}')
+        return redirect(url_for('accept_invitation_page', invitation_id=invitation_id))
+
+@app.route('/api/list-invitations')
+def list_invitations():
+    """List invitations for current tenant"""
+    user = get_user_from_session()
+    if not user:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        dynamodb_resource = boto3.resource('dynamodb')
+        invitations_table = dynamodb_resource.Table('FileExchangeInvitations')
+        
+        # Query invitations for this tenant
+        response = invitations_table.scan(
+            FilterExpression='tenant_id = :tenant_id',
+            ExpressionAttributeValues={':tenant_id': user['tenant_id']}
+        )
+        
+        invitations = response.get('Items', [])
+        
+        return jsonify({'invitations': invitations})
+        
+    except Exception as e:
+        print(f"Error listing invitations: {e}")
+        return jsonify({'error': f'Failed to list invitations: {str(e)}'}), 500
 
 if __name__ == '__main__':
     # Check required environment variables

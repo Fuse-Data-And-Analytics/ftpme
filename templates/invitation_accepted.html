@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome to FTPme{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div class="sm:mx-auto sm:w-full sm:max-w-md">
+        <div class="text-center">
+            <div class="mx-auto h-16 w-16 rounded-full bg-green-100 flex items-center justify-center">
+                <svg class="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+            </div>
+            <h2 class="mt-6 text-3xl font-bold text-gray-900">
+                Welcome to FTPme!
+            </h2>
+            <p class="mt-2 text-sm text-gray-600">
+                Your account has been created successfully
+            </p>
+        </div>
+    </div>
+
+    <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+            <div class="text-center">
+                <div class="mb-6">
+                    <div class="inline-flex items-center px-4 py-2 bg-green-50 border border-green-200 rounded-lg">
+                        <svg class="h-5 w-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                        <span class="text-sm font-medium text-green-700">Account Created</span>
+                    </div>
+                </div>
+
+                <h3 class="text-lg font-medium text-gray-900 mb-2">
+                    Hello, {{ username }}!
+                </h3>
+                
+                <p class="text-sm text-gray-600 mb-6">
+                    You now have secure access to the shared files. An email with your login details and next steps has been sent to you.
+                </p>
+
+                <div class="space-y-4">
+                    <div class="bg-blue-50 rounded-lg p-4">
+                        <h4 class="text-sm font-medium text-blue-900 mb-2">What's Next?</h4>
+                        <ul class="text-sm text-blue-700 space-y-1 text-left">
+                            <li>• Check your email for login instructions</li>
+                            <li>• Use your credentials to access shared files</li>
+                            <li>• Contact the person who invited you if you need help</li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h4 class="text-sm font-medium text-gray-900 mb-2">Security Notice</h4>
+                        <p class="text-xs text-gray-600">
+                            Your access is limited to the specific files you've been invited to. 
+                            FTPme uses enterprise-grade security to protect all shared data.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="mt-8">
+                    <a href="{{ url_for('index') }}" 
+                       class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Go to FTPme Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-8 text-center">
+        <p class="text-xs text-gray-500">
+            Need help? Contact support or the person who invited you.
+        </p>
+    </div>
+</div>
+{% endblock %} 
