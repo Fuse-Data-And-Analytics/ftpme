@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - FTPme File Exchange Platform{% endblock %}
+
+{% block content %}
+<div class="py-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center">
+            <h1 class="text-2xl font-semibold text-gray-900">Dashboard</h1>
+            <a href="{{ url_for('logout') }}" class="text-sm text-gray-500 hover:text-gray-700">
+                Logout
+            </a>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Welcome Section -->
+        <div class="mt-8">
+            <div class="card p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <svg class="h-12 w-12 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <h2 class="text-xl font-semibold text-gray-900">Centralized File Exchange Platform</h2>
+                        <p class="mt-1 text-sm text-gray-500">Tenant ID: {{ tenant_id }}</p>
+                        <p class="mt-1 text-sm text-gray-500">Your secure file exchange environment with per-user access control</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SFTP Connection Info -->
+        <div class="mt-8">
+            <h2 class="text-lg font-medium text-gray-900">SFTP Connection Details</h2>
+            <div class="mt-4 card p-6">
+                <div class="bg-blue-50 border border-blue-200 rounded-md p-4 mb-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-blue-800">Centralized Architecture</h3>
+                            <div class="mt-2 text-sm text-blue-700">
+                                <p>This platform uses a single SFTP server with per-user IAM roles and logical home directory mappings for secure multi-tenant access.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500">SFTP Server Endpoint</label>
+                        <div class="mt-1 flex rounded-md shadow-sm">
+                            <input type="text" readonly value="{{ server_endpoint }}"
+                                class="input-field flex-1 block w-full rounded-md sm:text-sm"
+                                id="server-endpoint">
+                            <button onclick="copyToClipboard('server-endpoint')"
+                                class="ml-3 inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                Copy
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500">Port</label>
+                        <div class="mt-1 flex rounded-md shadow-sm">
+                            <input type="text" readonly value="22"
+                                class="input-field flex-1 block w-full rounded-md sm:text-sm"
+                                id="port">
+                            <button onclick="copyToClipboard('port')"
+                                class="ml-3 inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                Copy
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500">Connection Example</label>
+                        <div class="mt-1 p-3 bg-gray-100 rounded-md">
+                            <code class="text-sm text-gray-800">sftp [username]@{{ server_endpoint }}</code>
+                        </div>
+                        <p class="mt-1 text-xs text-gray-500">Replace [username] with your actual SFTP username from the table below</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Management -->
+        <div class="mt-8">
+            <div class="flex justify-between items-center">
+                <h2 class="text-lg font-medium text-gray-900">User Management</h2>
+                <a href="{{ url_for('create_user') }}"
+                    class="btn-primary inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm">
+                    Add New User
+                </a>
+            </div>
+            <div class="mt-4 card">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Display Name
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    SFTP Username
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Email
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Role
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Status
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Created At
+                                </th>
+                                <th scope="col" class="relative px-6 py-3">
+                                    <span class="sr-only">Actions</span>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for user in users %}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    {{ user.username }}
+                                    {% if user.role == 'admin' %}
+                                    <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                        Admin
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
+                                    {{ user.sftp_username }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ user.email }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ user.role }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                        {% if user.status == 'active' %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                        {{ user.status }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ user.created_at }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    {% if user.role != 'admin' %}
+                                    <a href="{{ url_for('delete_user', username=user.username) }}" 
+                                       onclick="return confirm('Are you sure you want to delete this user?')"
+                                       class="text-red-600 hover:text-red-900">
+                                        Delete
+                                    </a>
+                                    {% else %}
+                                    <span class="text-gray-400">Protected</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% if not users %}
+                    <div class="text-center py-12">
+                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5 0a9 9 0 01-9 9 9 9 0 11-9-9 9 9 0 019 9z"/>
+                        </svg>
+                        <h3 class="mt-2 text-sm font-medium text-gray-900">No users yet</h3>
+                        <p class="mt-1 text-sm text-gray-500">Get started by creating your first user.</p>
+                        <div class="mt-6">
+                            <a href="{{ url_for('create_user') }}" class="btn-primary inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md">
+                                Add First User
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Architecture Details -->
+        <div class="mt-8">
+            <div class="card p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Architecture Details</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="font-medium text-gray-900">Security Features</h4>
+                        <ul class="mt-2 text-sm text-gray-600 space-y-1">
+                            <li>• Per-user IAM roles with tenant-specific S3 access</li>
+                            <li>• Logical home directory mappings</li>
+                            <li>• KMS encryption at rest</li>
+                            <li>• CloudWatch audit logging</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="font-medium text-gray-900">Platform Benefits</h4>
+                        <ul class="mt-2 text-sm text-gray-600 space-y-1">
+                            <li>• Centralized SFTP server for all tenants</li>
+                            <li>• Automatic tenant isolation</li>
+                            <li>• Scalable multi-tenant architecture</li>
+                            <li>• Fine-grained access control</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyToClipboard(elementId) {
+    const element = document.getElementById(elementId);
+    element.select();
+    document.execCommand('copy');
+    
+    // Show feedback
+    const button = element.nextElementSibling;
+    const originalText = button.textContent;
+    button.textContent = 'Copied!';
+    setTimeout(() => {
+        button.textContent = originalText;
+    }, 2000);
+}
+</script>
+{% endblock %} 

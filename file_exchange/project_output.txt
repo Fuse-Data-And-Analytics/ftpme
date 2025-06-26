@@ -1,0 +1,349 @@
+File: ./__init__.py
+
+File: ./platform_stack.py
+from aws_cdk import (
+    Stack,
+    aws_transfer as transfer,
+    aws_s3 as s3,
+    aws_iam as iam,
+    aws_dynamodb as dynamodb,
+    aws_logs as logs,
+    aws_kms as kms,
+    RemovalPolicy,
+    Tags,
+    Duration,
+    CfnOutput
+)
+from constructs import Construct
+from .user_management import SftpUserManagement
+
+
+class FileExchangePlatform(Stack):
+    def __init__(self, scope: Construct, construct_id: str, env_name: str, **kwargs):
+        super().__init__(scope, construct_id, **kwargs)
+
+        # KMS Key for encryption
+        self.encryption_key = kms.Key(
+            self, "FileExchangeKey",
+            enable_key_rotation=True,
+            pending_window=Duration.days(7),
+            removal_policy=RemovalPolicy.RETAIN,
+            alias=f"{env_name}-file-exchange-key"
+        )
+
+        # Add permissions for CloudWatch Logs to use the KMS key
+        self.encryption_key.add_to_resource_policy(
+            iam.PolicyStatement(
+                actions=[
+                    "kms:Encrypt*",
+                    "kms:Decrypt*",
+                    "kms:ReEncrypt*",
+                    "kms:GenerateDataKey*",
+                    "kms:Describe*"
+                ],
+                principals=[
+                    iam.ServicePrincipal(f"logs.{self.region}.amazonaws.com")
+                ],
+                resources=["*"],
+                conditions={
+                    "ArnLike": {
+                        "kms:EncryptionContext:aws:logs:arn": f"arn:aws:logs:{self.region}:{self.account}:*"
+                    }
+                }
+            )
+        )
+
+        # Enable server access logging
+        self.access_logs_bucket = s3.Bucket(
+            self, "AccessLogsBucket",
+            encryption=s3.BucketEncryption.KMS,
+            encryption_key=self.encryption_key,
+            enforce_ssl=True,
+            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
+            removal_policy=RemovalPolicy.RETAIN
+        )
+        
+        # Storage for file exchange with logging configured
+        self.storage_bucket = s3.Bucket(
+            self, "FileExchangeBucket",
+            encryption=s3.BucketEncryption.KMS,
+            encryption_key=self.encryption_key,
+            enforce_ssl=True,
+            versioned=True,
+            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
+            removal_policy=RemovalPolicy.RETAIN,
+            server_access_logs_bucket=self.access_logs_bucket,
+            server_access_logs_prefix="file-exchange-logs/",
+            lifecycle_rules=[
+                s3.LifecycleRule(
+                    transitions=[
+                        s3.Transition(
+                            storage_class=s3.StorageClass.INTELLIGENT_TIERING,
+                            transition_after=Duration.days(90)
+                        )
+                    ],
+                    noncurrent_version_expiration=Duration.days(90)
+                )
+            ]
+        )
+
+        # Tenant metadata table
+        self.tenant_table = dynamodb.Table(
+            self, "TenantTable",
+            partition_key=dynamodb.Attribute(
+                name="tenant_id",
+                type=dynamodb.AttributeType.STRING
+            ),
+            sort_key=dynamodb.Attribute(
+                name="user_id",
+                type=dynamodb.AttributeType.STRING
+            ),
+            encryption=dynamodb.TableEncryption.CUSTOMER_MANAGED,
+            encryption_key=self.encryption_key,
+            point_in_time_recovery_specification=dynamodb.PointInTimeRecoverySpecification(
+                point_in_time_recovery_enabled=True
+            ),
+            removal_policy=RemovalPolicy.RETAIN,
+            billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
+            time_to_live_attribute="ttl"
+        )
+
+        # CloudWatch Log Group for SFTP logs
+        self.log_group = logs.LogGroup(
+            self, "FileTransferLogs",
+            retention=logs.RetentionDays.ONE_YEAR,
+            encryption_key=self.encryption_key,
+            removal_policy=RemovalPolicy.RETAIN
+        )
+
+        # IAM role for SFTP server
+        self.transfer_role = iam.Role(
+            self, "TransferRole",
+            assumed_by=iam.ServicePrincipal("transfer.amazonaws.com"),
+            description="Role for AWS Transfer Family SFTP server"
+        )
+
+        self.transfer_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=[
+                    "s3:ListBucket",
+                    "s3:GetObject",
+                    "s3:PutObject",
+                    "s3:DeleteObject"
+                ],
+                resources=[
+                    self.storage_bucket.bucket_arn,
+                    f"{self.storage_bucket.bucket_arn}/*"
+                ]
+            )
+        )
+
+        # SFTP Server
+        self.transfer_server = transfer.CfnServer(
+            self, "FileTransferServer",
+            protocols=["SFTP"],
+            domain="S3",
+            identity_provider_type="SERVICE_MANAGED",
+            logging_role=self.transfer_role.role_arn,
+            protocol_details=transfer.CfnServer.ProtocolDetailsProperty(
+                passive_ip="AUTO",
+                set_stat_option="ENABLE_NO_OP",
+                tls_session_resumption_mode="ENFORCED"
+            ),
+            security_policy_name="TransferSecurityPolicy-2020-06",
+            structured_log_destinations=[
+                self.log_group.log_group_arn
+            ]
+        )
+        
+        # Add user management
+        self.user_management = SftpUserManagement(
+            self, "UserManagement",
+            transfer_server=self.transfer_server,
+            storage_bucket=self.storage_bucket,
+            tenant_table=self.tenant_table
+        )
+
+        # Add tags to all resources
+        Tags.of(self).add("Environment", env_name)
+        Tags.of(self).add("Service", "FileExchange")
+        Tags.of(self).add("ManagedBy", "CDK")
+
+        # Add these outputs at the end of __init__
+        CfnOutput(
+            self, "TransferServerId",
+            value=self.transfer_server.attr_server_id,
+            description="SFTP Server ID"
+        )
+
+        CfnOutput(
+            self, "BucketName",
+            value=self.storage_bucket.bucket_name,
+            description="S3 Bucket Name"
+        )
+
+File: ./user_management.py
+from aws_cdk import (
+    aws_transfer as transfer,
+    aws_iam as iam,
+    aws_s3 as s3,
+    aws_dynamodb as dynamodb,
+    RemovalPolicy,
+    CfnOutput,
+    Duration
+)
+from constructs import Construct
+import json
+from datetime import datetime, timezone
+
+class SftpUserManagement(Construct):
+    def __init__(self, scope: Construct, id: str, 
+                 transfer_server: transfer.CfnServer,
+                 storage_bucket: s3.Bucket,
+                 tenant_table: dynamodb.Table,
+                 **kwargs):
+        super().__init__(scope, id, **kwargs)
+        
+        self.transfer_server = transfer_server
+        self.storage_bucket = storage_bucket
+        self.tenant_table = tenant_table
+
+        # Create a base IAM role for SFTP users
+        self.user_role = iam.Role(
+            self, "SftpUserRole",
+            assumed_by=iam.ServicePrincipal("transfer.amazonaws.com"),
+            description="Base role for SFTP users"
+        )
+
+        # Add S3 permissions
+        self.user_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=[
+                    "s3:ListBucket",
+                    "s3:GetObject",
+                    "s3:PutObject",
+                    "s3:DeleteObject"
+                ],
+                resources=[
+                    storage_bucket.bucket_arn,
+                    f"{storage_bucket.bucket_arn}/*"
+                ]
+            )
+        )
+
+    def create_sftp_user(self, username: str, tenant_id: str, ssh_public_key: str, 
+                        home_directory: str = None, tags: dict = None):
+        """
+        Create a new SFTP user with the specified configuration
+        
+        Args:
+            username (str): The username for SFTP access
+            tenant_id (str): The tenant identifier
+            ssh_public_key (str): The user's SSH public key
+            home_directory (str): Optional custom home directory path
+            tags (dict): Optional tags to apply to the user
+        """
+        # Set default home directory if not provided
+        if not home_directory:
+            home_directory = f"/{self.storage_bucket.bucket_name}/{tenant_id}/{username}"
+
+        # Create user-specific IAM role
+        user_specific_role = iam.Role(
+            self, f"SftpRole{username}",
+            assumed_by=iam.ServicePrincipal("transfer.amazonaws.com"),
+            description=f"Role for SFTP user {username}"
+        )
+
+        # Add same permissions as base role
+        user_specific_role.add_managed_policy(
+            iam.ManagedPolicy.from_managed_policy_arn(
+                self, f"UserPolicy{username}",
+                managed_policy_arn=self.user_role.role_arn
+            )
+        )
+
+        # Prepare user tags
+        user_tags = [
+            transfer.CfnUser.TagProperty(
+                key="Tenant",
+                value=tenant_id
+            )
+        ]
+        if tags:
+            user_tags.extend([
+                transfer.CfnUser.TagProperty(key=k, value=v)
+                for k, v in tags.items()
+            ])
+
+        # Create the SFTP user
+        user = transfer.CfnUser(
+            self, f"SftpUser{username}",
+            server_id=self.transfer_server.attr_server_id,
+            user_name=username,
+            role=user_specific_role.role_arn,
+            home_directory=home_directory,
+            home_directory_type="LOGICAL",
+            ssh_public_keys=[ssh_public_key],
+            tags=user_tags
+        )
+
+        # Store user metadata in DynamoDB
+        self.store_user_metadata(
+            username=username,
+            tenant_id=tenant_id,
+            home_directory=home_directory
+        )
+
+        return user
+
+    def store_user_metadata(self, username: str, tenant_id: str, home_directory: str):
+        """
+        Store user metadata in DynamoDB
+        """
+        # Calculate TTL for 1 year from now
+        ttl = int((datetime.now(timezone.utc) + Duration.days(365)).timestamp())
+
+        # Store user metadata
+        self.tenant_table.put_item(
+            Item={
+                'tenant_id': tenant_id,
+                'user_id': username,
+                'home_directory': home_directory,
+                'created_at': datetime.now(timezone.utc).isoformat(),
+                'ttl': ttl
+            }
+        )
+
+    def delete_sftp_user(self, username: str, tenant_id: str):
+        """
+        Delete an SFTP user and their associated resources
+        """
+        # Delete the user from Transfer Family
+        transfer.CfnUser.from_cfn_user_attributes(
+            self, f"DeleteUser{username}",
+            server_id=self.transfer_server.attr_server_id,
+            user_name=username
+        ).apply_removal_policy(RemovalPolicy.DESTROY)
+
+        # Delete user metadata from DynamoDB
+        self.tenant_table.delete_item(
+            Key={
+                'tenant_id': tenant_id,
+                'user_id': username
+            }
+        )
+
+    def update_ssh_key(self, username: str, new_ssh_public_key: str):
+        """
+        Update the SSH public key for an existing user
+        """
+        user = transfer.CfnUser.from_cfn_user_attributes(
+            self, f"UpdateUser{username}",
+            server_id=self.transfer_server.attr_server_id,
+            user_name=username
+        )
+        
+        user.add_property_override(
+            "SshPublicKeys", [new_ssh_public_key]
+        )
+

@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Access Your Company Files - FTPme{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+        <div>
+            <div class="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-blue-100">
+                <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                </svg>
+            </div>
+            <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                Access your company files
+            </h2>
+            <p class="mt-2 text-center text-sm text-gray-600">
+                Sign in to upload, download, and share files with your team
+            </p>
+        </div>
+        
+        <form class="mt-8 space-y-6" method="POST">
+            <div class="space-y-4">
+                <div>
+                    <label for="tenant_id" class="block text-sm font-medium text-gray-700">
+                        Company Workspace ID
+                    </label>
+                    <div class="mt-1">
+                        <input id="tenant_id" name="tenant_id" type="text" required 
+                               class="input-field appearance-none relative block w-full px-3 py-2 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                               placeholder="Enter your company workspace ID">
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500">
+                        This was provided when your company workspace was created
+                    </p>
+                </div>
+                
+                <div>
+                    <label for="username" class="block text-sm font-medium text-gray-700">
+                        Your Name
+                    </label>
+                    <div class="mt-1">
+                        <input id="username" name="username" type="text" required 
+                               class="input-field appearance-none relative block w-full px-3 py-2 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                               placeholder="Enter your name">
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500">
+                        Use the name provided to you by your company administrator
+                    </p>
+                </div>
+            </div>
+
+            <div>
+                <button type="submit" 
+                        class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+                        <svg class="h-5 w-5 text-blue-500 group-hover:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                        </svg>
+                    </span>
+                    Access My Files
+                </button>
+            </div>
+
+            <div class="text-center">
+                <div class="text-sm">
+                    <span class="text-gray-500">Need access? </span>
+                    <a href="{{ url_for('signup') }}" class="font-medium text-blue-600 hover:text-blue-500">
+                        Contact your company administrator
+                    </a>
+                </div>
+                <div class="mt-2 text-sm">
+                    <span class="text-gray-500">Setting up a new company? </span>
+                    <a href="{{ url_for('signup') }}" class="font-medium text-blue-600 hover:text-blue-500">
+                        Create workspace
+                    </a>
+                </div>
+                <div class="mt-4 text-sm">
+                    <a href="{{ url_for('index') }}" class="font-medium text-blue-600 hover:text-blue-500">
+                        ← Back to home
+                    </a>
+                </div>
+            </div>
+        </form>
+        
+        <!-- Help Section -->
+        <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+            <h3 class="text-sm font-medium text-gray-900 mb-2">Need help signing in?</h3>
+            <ul class="text-xs text-gray-600 space-y-1">
+                <li>• Your company administrator can provide your workspace ID</li>
+                <li>• Use the exact name given to you during account setup</li>
+                <li>• Contact support if you're having trouble accessing your files</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Create Your Company Workspace - FTPme{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+        <div>
+            <div class="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-blue-100">
+                <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                </svg>
+            </div>
+            <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                Create your company workspace
+            </h2>
+            <p class="mt-2 text-center text-sm text-gray-600">
+                Set up secure file sharing for your business in under 2 minutes
+            </p>
+        </div>
+        
+        <form class="mt-8 space-y-6" method="POST">
+            <div class="space-y-4">
+                <div>
+                    <label for="company_name" class="block text-sm font-medium text-gray-700">
+                        Company Name *
+                    </label>
+                    <div class="mt-1">
+                        <input id="company_name" name="company_name" type="text" required 
+                               class="input-field appearance-none relative block w-full px-3 py-2 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                               placeholder="Enter your company name">
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="admin_name" class="block text-sm font-medium text-gray-700">
+                        Administrator Name *
+                    </label>
+                    <div class="mt-1">
+                        <input id="admin_name" name="admin_name" type="text" required 
+                               class="input-field appearance-none relative block w-full px-3 py-2 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                               placeholder="Enter your full name">
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500">
+                        This will be your login name and you'll have full access to manage users
+                    </p>
+                </div>
+                
+                <div>
+                    <label for="admin_email" class="block text-sm font-medium text-gray-700">
+                        Administrator Email *
+                    </label>
+                    <div class="mt-1">
+                        <input id="admin_email" name="admin_email" type="email" required 
+                               class="input-field appearance-none relative block w-full px-3 py-2 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                               placeholder="admin@yourcompany.com">
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500">
+                        Used for important notifications and workspace recovery
+                    </p>
+                </div>
+            </div>
+
+            <div class="bg-blue-50 p-4 rounded-lg">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-blue-800">
+                            What happens next?
+                        </h3>
+                        <div class="mt-2 text-sm text-blue-700">
+                            <ul class="list-disc list-inside space-y-1">
+                                <li>Your secure workspace will be created instantly</li>
+                                <li>You'll get a unique workspace ID to share with your team</li>
+                                <li>Start uploading files and inviting team members right away</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <button type="submit" 
+                        class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+                        <svg class="h-5 w-5 text-blue-500 group-hover:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                    </span>
+                    Create Company Workspace
+                </button>
+            </div>
+
+            <div class="text-center">
+                <div class="text-sm">
+                    <span class="text-gray-500">Already have a workspace? </span>
+                    <a href="{{ url_for('login') }}" class="font-medium text-blue-600 hover:text-blue-500">
+                        Sign in to access files
+                    </a>
+                </div>
+                <div class="mt-4 text-sm">
+                    <a href="{{ url_for('index') }}" class="font-medium text-blue-600 hover:text-blue-500">
+                        ← Back to home
+                    </a>
+                </div>
+            </div>
+        </form>
+        
+        <!-- Security Notice -->
+        <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+            <h3 class="text-sm font-medium text-gray-900 mb-2">🔒 Enterprise Security</h3>
+            <ul class="text-xs text-gray-600 space-y-1">
+                <li>• End-to-end encryption for all files</li>
+                <li>• SOC 2 Type II compliant infrastructure</li>
+                <li>• Complete audit logs for compliance</li>
+                <li>• Secure access controls and permissions</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}FTPme - The Easiest Way for Companies to Exchange Files{% endblock %}
+
+{% block content %}
+<div class="relative overflow-hidden">
+    <!-- Hero Section -->
+    <div class="relative bg-white">
+        <div class="max-w-7xl mx-auto">
+            <div class="relative z-10 pb-8 bg-white sm:pb-16 md:pb-20 lg:max-w-2xl lg:w-full lg:pb-28 xl:pb-32">
+                <main class="mt-10 mx-auto max-w-7xl px-4 sm:mt-12 sm:px-6 md:mt-16 lg:mt-20 lg:px-8 xl:mt-28">
+                    <div class="sm:text-center lg:text-left">
+                        <h1 class="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
+                            <span class="block">The Easiest Way</span>
+                            <span class="block">for Companies to</span>
+                            <span class="block text-blue-600">Exchange Files</span>
+                        </h1>
+                        <p class="mt-3 text-base text-gray-500 sm:mt-5 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl lg:mx-0">
+                            Create secure "Drops" - dedicated collaboration spaces for each project or partnership. 
+                            Invite internal team members and external partners to share files with enterprise-grade security.
+                        </p>
+                        <div class="mt-5 sm:mt-8 sm:flex sm:justify-center lg:justify-start space-y-3 sm:space-y-0 sm:space-x-3">
+                            <div class="rounded-md shadow">
+                                <a href="{{ url_for('login') }}" class="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 md:py-4 md:text-lg md:px-10">
+                                    <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                                    </svg>
+                                    Access My Files
+                                </a>
+                            </div>
+                            <div class="rounded-md shadow">
+                                <a href="{{ url_for('signup') }}" class="w-full flex items-center justify-center px-8 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 md:py-4 md:text-lg md:px-10">
+                                    <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                                    </svg>
+                                    Create Company Workspace
+                                </a>
+                            </div>
+                        </div>
+                        <div class="mt-4 text-center lg:text-left">
+                            <p class="text-sm text-gray-500">
+                                🚀 <strong>New:</strong> Advanced users can also connect via SFTP for automation
+                            </p>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <!-- How It Works Section -->
+    <div class="py-12 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="lg:text-center">
+                <h2 class="text-base text-blue-600 font-semibold tracking-wide uppercase">How It Works</h2>
+                <p class="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+                    File sharing in 3 simple steps
+                </p>
+            </div>
+
+            <div class="mt-10">
+                <div class="space-y-10 md:space-y-0 md:grid md:grid-cols-3 md:gap-x-8 md:gap-y-10">
+                    <!-- Step 1 -->
+                    <div class="relative text-center">
+                        <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-blue-500 text-white text-xl font-bold">
+                            1
+                        </div>
+                        <div class="mt-4">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900">Create Your Company Workspace</h3>
+                            <p class="mt-2 text-base text-gray-500">
+                                Set up your company's secure file exchange workspace in under 2 minutes. 
+                                No technical knowledge required.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="relative text-center">
+                        <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-blue-500 text-white text-xl font-bold">
+                            2
+                        </div>
+                        <div class="mt-4">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900">Invite Your Partners</h3>
+                            <p class="mt-2 text-base text-gray-500">
+                                Add team members, clients, and vendors with simple email invitations. 
+                                Each person gets secure access to relevant files.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="relative text-center">
+                        <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-blue-500 text-white text-xl font-bold">
+                            3
+                        </div>
+                        <div class="mt-4">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900">Share Files Instantly</h3>
+                            <p class="mt-2 text-base text-gray-500">
+                                Upload, organize, and share files through our beautiful web interface. 
+                                No downloads or software installations needed.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feature Section -->
+    <div class="py-12 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="lg:text-center">
+                <h2 class="text-base text-blue-600 font-semibold tracking-wide uppercase">Features</h2>
+                <p class="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+                    Everything your business needs to share files securely
+                </p>
+            </div>
+
+            <div class="mt-10">
+                <div class="space-y-10 md:space-y-0 md:grid md:grid-cols-2 md:gap-x-8 md:gap-y-10">
+                    <!-- Web-First Experience -->
+                    <div class="relative card p-6">
+                        <div class="absolute flex items-center justify-center h-12 w-12 rounded-md bg-blue-500 text-white">
+                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9"/>
+                            </svg>
+                        </div>
+                        <div class="ml-16">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900">Web-First Experience</h3>
+                            <p class="mt-2 text-base text-gray-500">
+                                Beautiful, intuitive web interface that works on any device. Upload, download, and organize files like you would with Google Drive.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Business-Grade Security -->
+                    <div class="relative card p-6">
+                        <div class="absolute flex items-center justify-center h-12 w-12 rounded-md bg-blue-500 text-white">
+                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                            </svg>
+                        </div>
+                        <div class="ml-16">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900">Business-Grade Security</h3>
+                            <p class="mt-2 text-base text-gray-500">
+                                Enterprise-level encryption, secure access controls, and compliance-ready audit logs. Your data is always protected.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Partner Collaboration -->
+                    <div class="relative card p-6">
+                        <div class="absolute flex items-center justify-center h-12 w-12 rounded-md bg-blue-500 text-white">
+                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                            </svg>
+                        </div>
+                        <div class="ml-16">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900">Partner Collaboration</h3>
+                            <p class="mt-2 text-base text-gray-500">
+                                Easily invite external partners, clients, and vendors. Control exactly what each person can access and do.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Integration -->
+                    <div class="relative card p-6">
+                        <div class="absolute flex items-center justify-center h-12 w-12 rounded-md bg-blue-500 text-white">
+                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                        </div>
+                        <div class="ml-16">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900">Advanced Integration</h3>
+                            <p class="mt-2 text-base text-gray-500">
+                                Need automation? Connect via SFTP, APIs, or our developer tools for seamless integration with your existing systems.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA Section -->
+    <div class="bg-blue-600">
+        <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:py-16 lg:px-8 lg:flex lg:items-center lg:justify-between">
+            <h2 class="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+                <span class="block">Ready to simplify your file sharing?</span>
+                <span class="block text-blue-200">Start your company workspace today.</span>
+            </h2>
+            <div class="mt-8 flex lg:mt-0 lg:flex-shrink-0">
+                <div class="inline-flex rounded-md shadow">
+                    <a href="{{ url_for('signup') }}" class="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-blue-600 bg-white hover:bg-blue-50">
+                        Get started for free
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,659 @@
+{% extends "base.html" %}
+
+{% block title %}{{ drop.name }} Files - FTPme{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center">
+                    <a href="{{ url_for('drops_dashboard') }}" class="text-gray-400 hover:text-gray-600 mr-4">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                        </svg>
+                    </a>
+                    <div class="flex-shrink-0">
+                        <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                            <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <h1 class="text-2xl font-bold text-gray-900">{{ drop.name }}</h1>
+                        <p class="text-sm text-gray-500">Secure collaboration space</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-3">
+                    <button id="newFolderBtn" 
+                            class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                        New Folder
+                    </button>
+                    <button id="uploadBtn" 
+                            class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                        </svg>
+                        Upload Files
+                    </button>
+                    <a href="{{ url_for('drop_settings', drop_id=drop.id) }}" 
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                        Manage Drop
+                    </a>
+                    <div class="relative">
+                        <button id="userMenuBtn" class="flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            <div class="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
+                                <span class="text-sm font-medium text-gray-700">{{ user.username[0].upper() }}</span>
+                            </div>
+                        </button>
+                        <div id="userMenu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                            <div class="px-4 py-2 text-sm text-gray-700 border-b">
+                                <p class="font-medium">{{ user.username }}</p>
+                                <p class="text-gray-500">{{ user.email }}</p>
+                            </div>
+                            <a href="{{ url_for('user_logout') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Sign out</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Drop Info Banner -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-blue-800">
+                        You're in the "{{ drop.name }}" collaboration space
+                    </h3>
+                    <div class="mt-1 text-sm text-blue-700">
+                        <p>Files uploaded here are automatically shared with all members of this drop. Use folders to organize content by topic or deadline.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Breadcrumb Navigation -->
+        {% if breadcrumbs|length > 1 %}
+        <nav class="flex mb-6" aria-label="Breadcrumb">
+            <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                {% for breadcrumb in breadcrumbs %}
+                    <li class="inline-flex items-center">
+                        {% if not loop.last %}
+                            {% if loop.first %}
+                                <a href="{{ url_for('drops_dashboard') }}" 
+                                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
+                                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/>
+                                    </svg>
+                                    {{ breadcrumb.name }}
+                                </a>
+                            {% else %}
+                                <a href="{{ url_for('drop_files', drop_id=drop.id, path=breadcrumb.path) }}" 
+                                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
+                                    {{ breadcrumb.name }}
+                                </a>
+                            {% endif %}
+                            <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                            </svg>
+                        {% else %}
+                            <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">{{ breadcrumb.name }}</span>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ol>
+        </nav>
+        {% endif %}
+
+        <!-- Files Grid -->
+        <div class="bg-white shadow-sm rounded-lg overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">Files in {{ drop.name }}</h3>
+                <p class="mt-1 text-sm text-gray-500">{{ files|length }} items</p>
+            </div>
+
+            {% if files %}
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Modified</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for file in files %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        {% if file.type == 'folder' %}
+                                            <svg class="h-8 w-8 text-blue-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-5l-2-2H5a2 2 0 00-2 2z"/>
+                                            </svg>
+                                        {% else %}
+                                            <svg class="h-8 w-8 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                            </svg>
+                                        {% endif %}
+                                        <div>
+                                            {% if file.type == 'folder' %}
+                                                <a href="{{ url_for('drop_files', drop_id=drop.id, path=(current_path + '/' + file.name).strip('/')) }}" 
+                                                   class="text-sm font-medium text-blue-600 hover:text-blue-500">
+                                                    {{ file.name }}
+                                                </a>
+                                            {% else %}
+                                                <span class="text-sm font-medium text-gray-900">{{ file.name }}</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {% if file.type == 'file' %}
+                                        {{ file.size }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ file.modified }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <div class="flex justify-end space-x-2">
+                                        {% if file.type == 'file' %}
+                                            <a href="{{ url_for('download_file', file_path='drops/' + drop.id + '/' + (current_path + '/' + file.name).strip('/')) }}" 
+                                               class="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                                <svg class="h-3 w-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                                </svg>
+                                                Download
+                                            </a>
+                                        {% endif %}
+                                        <button onclick="deleteFile('drops/{{ drop.id }}/{{ (current_path + '/' + file.name).strip('/') }}')" 
+                                                class="inline-flex items-center px-3 py-1 border border-red-300 shadow-sm text-xs font-medium rounded text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                            <svg class="h-3 w-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                            </svg>
+                                            Delete
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-12">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                    </svg>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">No files yet</h3>
+                    <p class="mt-1 text-sm text-gray-500">Start collaborating by uploading your first file to this drop.</p>
+                    <div class="mt-6">
+                        <button id="emptyStateUpload" 
+                                class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                            </svg>
+                            Upload your first file
+                        </button>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Upload Modal -->
+    <div id="uploadModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">Upload Files to {{ drop.name }}</h3>
+                    <button id="closeUploadModal" class="text-gray-400 hover:text-gray-600">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <div class="mt-4">
+                        <label for="fileInput" class="cursor-pointer">
+                            <span class="mt-2 block text-sm font-medium text-gray-900">
+                                Drop files here or click to browse
+                            </span>
+                            <input id="fileInput" type="file" multiple class="hidden">
+                        </label>
+                        <p class="mt-1 text-xs text-gray-500">
+                            Files will be shared with all drop members
+                        </p>
+                    </div>
+                </div>
+                
+                <div id="uploadProgress" class="hidden mt-4">
+                    <div class="bg-blue-50 border border-blue-200 rounded-md p-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-medium text-blue-800">Uploading files...</h3>
+                                <div class="mt-2 text-sm text-blue-700">
+                                    <p id="uploadStatus">Preparing upload...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Folder Modal -->
+    <div id="folderModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">Create New Folder</h3>
+                    <button id="closeFolderModal" class="text-gray-400 hover:text-gray-600">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="folderName" class="block text-sm font-medium text-gray-700 mb-2">
+                        Folder Name
+                    </label>
+                    <input type="text" id="folderName" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="e.g., Q1 Earnings, Board Materials">
+                </div>
+                
+                <div class="flex justify-end space-x-3">
+                    <button id="cancelFolder" 
+                            class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Cancel
+                    </button>
+                    <button id="createFolder" 
+                            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Create Folder
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Modal functionality
+const uploadModal = document.getElementById('uploadModal');
+const folderModal = document.getElementById('folderModal');
+const userMenu = document.getElementById('userMenu');
+
+// Upload functionality
+document.getElementById('uploadBtn').addEventListener('click', () => {
+    uploadModal.classList.remove('hidden');
+});
+
+document.getElementById('emptyStateUpload')?.addEventListener('click', () => {
+    uploadModal.classList.remove('hidden');
+});
+
+document.getElementById('closeUploadModal').addEventListener('click', () => {
+    uploadModal.classList.add('hidden');
+});
+
+// User menu toggle
+document.getElementById('userMenuBtn').addEventListener('click', () => {
+    userMenu.classList.toggle('hidden');
+});
+
+// Close user menu when clicking outside
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('#userMenuBtn') && !e.target.closest('#userMenu')) {
+        userMenu.classList.add('hidden');
+    }
+});
+
+// Folder functionality
+document.getElementById('newFolderBtn').addEventListener('click', () => {
+    folderModal.classList.remove('hidden');
+});
+
+document.getElementById('closeFolderModal').addEventListener('click', () => {
+    folderModal.classList.add('hidden');
+});
+
+document.getElementById('cancelFolder').addEventListener('click', () => {
+    folderModal.classList.add('hidden');
+});
+
+document.getElementById('createFolder').addEventListener('click', async () => {
+    const folderName = document.getElementById('folderName').value.trim();
+    if (!folderName) return;
+    
+    try {
+        const response = await fetch('/create-folder', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                folder_name: folderName,
+                current_path: 'drops/{{ drop.id }}/' + '{{ current_path }}'.replace(/^\/+|\/+$/g, '')
+            })
+        });
+        
+        if (response.ok) {
+            location.reload();
+        } else {
+            alert('Failed to create folder');
+        }
+    } catch (error) {
+        alert('Error creating folder');
+    }
+});
+
+// Selected files array to track files before upload
+let selectedFiles = [];
+
+// Update the file input display
+function updateFileDisplay() {
+    const dropZone = document.querySelector('.border-dashed');
+    const fileList = document.getElementById('fileList') || createFileList();
+    
+    if (selectedFiles.length === 0) {
+        dropZone.innerHTML = `
+            <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <div class="mt-4">
+                <label for="fileInput" class="cursor-pointer">
+                    <span class="mt-2 block text-sm font-medium text-gray-900">
+                        Drop files here or click to browse
+                    </span>
+                    <input id="fileInput" type="file" multiple class="hidden">
+                </label>
+                <p class="mt-1 text-xs text-gray-500">
+                    Files will be shared with all drop members
+                </p>
+            </div>
+        `;
+        // Re-attach event listeners after innerHTML change
+        attachFileInputListeners();
+    } else {
+        dropZone.innerHTML = `
+            <div class="text-left">
+                <h4 class="text-sm font-medium text-gray-900 mb-2">Selected Files (${selectedFiles.length}):</h4>
+                <div id="fileList" class="space-y-1 mb-4 max-h-32 overflow-y-auto">
+                    ${selectedFiles.map(file => `
+                        <div class="flex items-center justify-between py-1 px-2 bg-gray-50 rounded text-xs">
+                            <span class="truncate">${file.name}</span>
+                            <button onclick="removeFile('${file.name}')" class="text-red-500 hover:text-red-700 ml-2">×</button>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="flex space-x-2">
+                    <label for="fileInput" class="cursor-pointer inline-flex items-center px-3 py-1 border border-gray-300 rounded text-xs font-medium text-gray-700 bg-white hover:bg-gray-50">
+                        Add More
+                        <input id="fileInput" type="file" multiple class="hidden">
+                    </label>
+                    <button onclick="uploadSelectedFiles()" class="inline-flex items-center px-3 py-1 border border-transparent rounded text-xs font-medium text-white bg-blue-600 hover:bg-blue-700">
+                        Upload ${selectedFiles.length} File${selectedFiles.length > 1 ? 's' : ''}
+                    </button>
+                    <button onclick="clearFiles()" class="inline-flex items-center px-3 py-1 border border-gray-300 rounded text-xs font-medium text-gray-700 bg-white hover:bg-gray-50">
+                        Clear
+                    </button>
+                </div>
+            </div>
+        `;
+        // Re-attach event listeners after innerHTML change
+        attachFileInputListeners();
+    }
+}
+
+function createFileList() {
+    const fileList = document.createElement('div');
+    fileList.id = 'fileList';
+    fileList.className = 'space-y-1 mb-4 max-h-32 overflow-y-auto';
+    return fileList;
+}
+
+function removeFile(fileName) {
+    selectedFiles = selectedFiles.filter(file => file.name !== fileName);
+    updateFileDisplay();
+}
+
+function clearFiles() {
+    selectedFiles = [];
+    updateFileDisplay();
+}
+
+function attachFileInputListeners() {
+    const fileInput = document.getElementById('fileInput');
+    if (fileInput) {
+        fileInput.removeEventListener('change', handleFileSelect); // Remove existing listener
+        fileInput.addEventListener('change', handleFileSelect);
+    }
+}
+
+// Handle file selection (both click and drag-drop)
+function handleFileSelect(e) {
+    const files = Array.from(e.target.files || e.dataTransfer.files);
+    
+    // Add new files to selectedFiles array (avoid duplicates)
+    files.forEach(file => {
+        if (!selectedFiles.find(f => f.name === file.name && f.size === file.size)) {
+            selectedFiles.push(file);
+        }
+    });
+    
+    updateFileDisplay();
+    
+    // Clear the file input so the same file can be selected again if needed
+    if (e.target.files) {
+        e.target.value = '';
+    }
+}
+
+// Upload selected files
+async function uploadSelectedFiles() {
+    if (selectedFiles.length === 0) return;
+    
+    const progressDiv = document.getElementById('uploadProgress');
+    const statusP = document.getElementById('uploadStatus');
+    
+    progressDiv.classList.remove('hidden');
+    statusP.textContent = `Uploading ${selectedFiles.length} file(s)...`;
+    
+    let successCount = 0;
+    let errorCount = 0;
+    
+    for (let i = 0; i < selectedFiles.length; i++) {
+        const file = selectedFiles[i];
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('current_path', 'drops/{{ drop.id }}/' + '{{ current_path }}'.replace(/^\/+|\/+$/g, ''));
+        
+        try {
+            const response = await fetch('/upload', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            if (result.success || response.ok) {
+                successCount++;
+                statusP.textContent = `Uploaded ${successCount}/${selectedFiles.length} files...`;
+            } else {
+                errorCount++;
+                console.error(`Failed to upload ${file.name}:`, result.error);
+            }
+        } catch (error) {
+            errorCount++;
+            console.error(`Error uploading ${file.name}:`, error);
+        }
+    }
+    
+    // Show final status
+    if (errorCount === 0) {
+        statusP.textContent = `Successfully uploaded ${successCount} file(s)!`;
+    } else {
+        statusP.textContent = `Uploaded ${successCount} files, ${errorCount} failed.`;
+    }
+    
+    // Clear selected files and close modal after a delay
+    setTimeout(() => {
+        selectedFiles = [];
+        uploadModal.classList.add('hidden');
+        progressDiv.classList.add('hidden');
+        location.reload();
+    }, 2000);
+}
+
+// Drag and drop functionality
+function setupDragAndDrop() {
+    const dropZone = document.querySelector('.border-dashed');
+    
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, highlight, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, unhighlight, false);
+    });
+    
+    function highlight(e) {
+        dropZone.classList.add('border-blue-500', 'bg-blue-50');
+    }
+    
+    function unhighlight(e) {
+        dropZone.classList.remove('border-blue-500', 'bg-blue-50');
+    }
+    
+    dropZone.addEventListener('drop', handleFileSelect, false);
+}
+
+// Folder creation
+document.getElementById('newFolderBtn').addEventListener('click', () => {
+    folderModal.classList.remove('hidden');
+    document.getElementById('folderName').focus();
+});
+
+document.getElementById('closeFolderModal').addEventListener('click', () => {
+    folderModal.classList.add('hidden');
+});
+
+document.getElementById('cancelFolder').addEventListener('click', () => {
+    folderModal.classList.add('hidden');
+});
+
+document.getElementById('createFolder').addEventListener('click', () => {
+    const folderName = document.getElementById('folderName').value.trim();
+    if (!folderName) {
+        alert('Please enter a folder name');
+        return;
+    }
+    
+    fetch('/create-folder', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            folder_name: folderName,
+            current_path: '{{ current_path }}'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert(`Error: ${data.error}`);
+        }
+    })
+    .catch(error => {
+        alert(`Error: ${error.message}`);
+    });
+});
+
+// File deletion
+function deleteFile(filePath) {
+    if (confirm('Are you sure you want to delete this file? This action cannot be undone.')) {
+        fetch('/delete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                file_path: filePath
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(`Error: ${data.error}`);
+            }
+        })
+        .catch(error => {
+            alert(`Error: ${error.message}`);
+        });
+    }
+}
+
+// Initialize drag and drop and file input listeners when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    setupDragAndDrop();
+    attachFileInputListeners();
+});
+
+// Close modals when clicking outside
+window.addEventListener('click', (e) => {
+    if (e.target === uploadModal) {
+        uploadModal.classList.add('hidden');
+    }
+    if (e.target === folderModal) {
+        folderModal.classList.add('hidden');
+    }
+});
+</script>
+{% endblock %} 
