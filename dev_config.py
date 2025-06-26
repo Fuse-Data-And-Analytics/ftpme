@@ -6,6 +6,33 @@ Set environment variables for testing
 
 import os
 
+class DevelopmentConfig:
+    """Development configuration class"""
+    
+    # Flask settings
+    SECRET_KEY = os.environ.get('FLASK_SECRET_KEY') or 'dev-secret-key-for-testing'
+    DEBUG = True
+    TESTING = False
+    
+    # Upload settings
+    MAX_CONTENT_LENGTH = 100 * 1024 * 1024  # 100MB
+    UPLOAD_FOLDER = 'uploads'
+    
+    # Session settings
+    SESSION_COOKIE_SECURE = False  # Allow HTTP in development
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    
+    # AWS settings (loaded from environment) - consolidated to us-east-2
+    AWS_DEFAULT_REGION = os.environ.get('AWS_DEFAULT_REGION', 'us-east-2')
+    CLIENT_FILES_BUCKET = os.environ.get('CLIENT_FILES_BUCKET')
+    TENANT_TABLE_NAME = os.environ.get('TENANT_TABLE_NAME')
+    TRANSFER_SERVER_ID = os.environ.get('TRANSFER_SERVER_ID')
+    
+    # Email configuration for development
+    MOCK_EMAIL = os.environ.get('MOCK_EMAIL', 'False').lower() == 'true'
+    SES_VERIFIED_EMAIL = os.environ.get('SES_VERIFIED_EMAIL', 'dev@example.com')
+
 def setup_dev_environment():
     """Set up development environment variables"""
     

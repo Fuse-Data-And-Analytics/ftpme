@@ -11,6 +11,9 @@ from botocore.exceptions import ClientError
 import tempfile
 from datetime import datetime
 import mimetypes
+from werkzeug.security import generate_password_hash, check_password_hash
+import uuid
+import hashlib
 
 # Set up development environment if running in debug mode
 if os.environ.get('DEBUG', 'False').lower() == 'true' or __name__ == '__main__':
@@ -40,14 +43,59 @@ if not os.environ.get('TENANT_TABLE_NAME'):
     # This should be set from CDK output - using placeholder for now  
     os.environ['TENANT_TABLE_NAME'] = 'TENANT_TABLE_FROM_CDK'
 
-# Initialize AWS clients
-s3_client = boto3.client('s3')
-dynamodb = boto3.client('dynamodb')
+# Load configuration
+if os.environ.get('FLASK_ENV') == 'development':
+    from dev_config import DevelopmentConfig
+    config = DevelopmentConfig()
+else:
+    from production_config import ProductionConfig
+    config = ProductionConfig()
+
+print(f"🔧 Development environment configured:")
+print(f"   FLASK_ENV: {os.environ.get('FLASK_ENV', 'production')}")
+print(f"   DEBUG: {config.DEBUG}")
+print(f"   MOCK_EMAIL: {config.MOCK_EMAIL}")
+print(f"   SES_VERIFIED_EMAIL: {config.SES_VERIFIED_EMAIL}")
+
+# AWS Client Factory - BEST PRACTICE APPROACH
+class AWSClientFactory:
+    """Centralized AWS client factory with proper configuration"""
+    
+    def __init__(self):
+        self.region = 'us-east-2'  # Centralized region configuration - consolidated to us-east-2
+        self._s3_client = None
+        self._dynamodb_client = None
+        self._dynamodb_resource = None
+    
+    def get_s3_client(self):
+        """Get S3 client with consistent configuration"""
+        if self._s3_client is None:
+            self._s3_client = boto3.client('s3', region_name=self.region)
+        return self._s3_client
+    
+    def get_dynamodb_client(self):
+        """Get DynamoDB client with consistent configuration"""
+        if self._dynamodb_client is None:
+            self._dynamodb_client = boto3.client('dynamodb', region_name=self.region)
+        return self._dynamodb_client
+    
+    def get_dynamodb_resource(self):
+        """Get DynamoDB resource with consistent configuration"""
+        if self._dynamodb_resource is None:
+            self._dynamodb_resource = boto3.resource('dynamodb', region_name=self.region)
+        return self._dynamodb_resource
+
+# Initialize AWS clients factory
+aws_factory = AWSClientFactory()
+
+# Initialize AWS clients using factory
+dynamodb = aws_factory.get_dynamodb_client()
 
 def get_user_from_session():
     """Get user information from session"""
     if 'user_tenant_id' in session and 'user_username' in session:
-        return {
+        # Ensure all data from session is serializable
+        user_data = {
             'tenant_id': session['user_tenant_id'],
             'username': session['user_username'],
             'email': session.get('user_email', ''),
@@ -59,11 +107,22 @@ def get_user_from_session():
             'drops_access': session.get('drops_access', []),
             'permissions': session.get('permissions', ['read'])
         }
+        return ensure_serializable(user_data)
     return None
+
+def ensure_serializable(data):
+    """Ensure data is JSON serializable by converting sets to lists"""
+    if isinstance(data, dict):
+        return {key: ensure_serializable(value) for key, value in data.items()}
+    elif isinstance(data, set):
+        return list(data)
+    elif isinstance(data, list):
+        return [ensure_serializable(item) for item in data]
+    else:
+        return data
 
 def find_user_by_credentials(username, password):
     """Find user by username and password across both internal and external users"""
-    import hashlib
     password_hash = hashlib.sha256(password.encode()).hexdigest()
     
     try:
@@ -104,6 +163,16 @@ def find_user_by_credentials(username, password):
         
         for item in response.get('Items', []):
             if item.get('password_hash') == password_hash:
+                # Ensure drops_access and permissions are lists, not sets
+                drops_access = item.get('drops_access', [])
+                permissions = item.get('permissions', ['read'])
+                
+                # Convert sets to lists for JSON serialization
+                if isinstance(drops_access, set):
+                    drops_access = list(drops_access)
+                if isinstance(permissions, set):
+                    permissions = list(permissions)
+                
                 return {
                     'tenant_id': item.get('tenant_id', ''),
                     'username': item.get('username', ''),
@@ -112,8 +181,8 @@ def find_user_by_credentials(username, password):
                     'user_type': 'external',
                     'host_tenant_id': item.get('host_tenant_id', ''),
                     'company_name': item.get('company_name', ''),
-                    'drops_access': item.get('drops_access', []),
-                    'permissions': item.get('permissions', ['read'])
+                    'drops_access': drops_access,
+                    'permissions': permissions
                 }
         
         return None
@@ -138,6 +207,8 @@ def list_s3_files(tenant_id, prefix=''):
         if not s3_prefix.endswith('/'):
             s3_prefix += '/'
         
+        # Get S3 client from factory
+        s3_client = aws_factory.get_s3_client()
         response = s3_client.list_objects_v2(
             Bucket=bucket_name,
             Prefix=s3_prefix,
@@ -210,10 +281,14 @@ def login():
             
             # External users have additional context
             if user_data.get('user_type') == 'external':
+                # Ensure all session data is serializable
+                drops_access = ensure_serializable(user_data.get('drops_access', []))
+                permissions = ensure_serializable(user_data.get('permissions', ['read']))
+                
                 session['host_tenant_id'] = user_data.get('host_tenant_id', '')
                 session['company_name'] = user_data.get('company_name', '')
-                session['drops_access'] = user_data.get('drops_access', [])
-                session['permissions'] = user_data.get('permissions', ['read'])
+                session['drops_access'] = drops_access
+                session['permissions'] = permissions
             
             flash(f'Welcome back, {username}!')
             return redirect(url_for('drops_dashboard'))
@@ -223,16 +298,6 @@ def login():
             return redirect(request.url)
     
     return render_template('login.html')
-
-
-
-
-
-
-
-
-
-
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
@@ -314,6 +379,7 @@ def get_tenant_drops(tenant_id):
         bucket_name = os.environ.get('S3_BUCKET_NAME')
         if bucket_name:
             try:
+                s3_client = aws_factory.get_s3_client()
                 response = s3_client.list_objects_v2(
                     Bucket=bucket_name,
                     Prefix=f"{tenant_id}/drops/",
@@ -375,6 +441,7 @@ def get_tenant_files_count(tenant_id):
             return 0
             
         # Only count files within drops
+        s3_client = aws_factory.get_s3_client()
         response = s3_client.list_objects_v2(
             Bucket=bucket_name,
             Prefix=f"{tenant_id}/drops/",
@@ -400,6 +467,7 @@ def get_drop_files_count(tenant_id, drop_id):
             return 0
             
         drop_prefix = f"{tenant_id}/drops/{drop_id}/"
+        s3_client = aws_factory.get_s3_client()
         response = s3_client.list_objects_v2(
             Bucket=bucket_name,
             Prefix=drop_prefix
@@ -425,6 +493,7 @@ def get_recent_activity_count(tenant_id, days=7):
         if not bucket_name:
             return 0
             
+        s3_client = aws_factory.get_s3_client()
         response = s3_client.list_objects_v2(
             Bucket=bucket_name,
             Prefix=f"{tenant_id}/"
@@ -572,6 +641,7 @@ def create_drop():
         # Create drop folder in S3
         bucket_name = os.environ.get('S3_BUCKET_NAME')
         if bucket_name:
+            s3_client = aws_factory.get_s3_client()
             s3_client.put_object(
                 Bucket=bucket_name,
                 Key=f"{user['tenant_id']}/drops/{drop_id}/.keep",
@@ -654,12 +724,28 @@ def drop_files(drop_id):
                 path_so_far += f"/{part}"
                 breadcrumbs.append({'name': part, 'path': path_so_far})
     
+    # Get user permissions for this drop
+    user_permissions = []
+    if user['user_type'] == 'external':
+        # External user - use permissions from session (already loaded during login)
+        if drop_id in user.get('drops_access', []):
+            user_permissions = user.get('permissions', [])
+        print(f"DEBUG: External user {user['username']} permissions for drop {drop_id}: {user_permissions}")
+        print(f"DEBUG: User drops access: {user.get('drops_access', [])}")
+    else:
+        # Internal users have all permissions
+        user_permissions = ['read', 'download', 'upload', 'delete']
+        print(f"DEBUG: Internal user {user['username']} permissions: {user_permissions}")
+    
+    print(f"DEBUG: Final user_permissions passed to template: {user_permissions}")
+    
     return render_template('drop_files.html', 
                          user=user, 
                          drop=drop,
                          files=files, 
                          current_path=current_path,
-                         breadcrumbs=breadcrumbs)
+                         breadcrumbs=breadcrumbs,
+                         user_permissions=user_permissions)
 
 @app.route('/drops/<drop_id>/settings')
 def drop_settings(drop_id):
@@ -911,6 +997,234 @@ def list_invitations():
     except Exception as e:
         print(f"Error listing invitations: {e}")
         return jsonify({'error': f'Failed to list invitations: {str(e)}'}), 500
+
+# File handling routes
+@app.route('/upload', methods=['POST'])
+def upload_file():
+    """Handle file uploads to drops"""
+    user = get_user_from_session()
+    if not user:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        # Get form data
+        files = request.files.getlist('files')
+        drop_id = request.form.get('drop_id')
+        current_path = request.form.get('current_path', '')
+        
+        if not files or not drop_id:
+            return jsonify({'error': 'No files or drop ID provided'}), 400
+        
+        # Verify user has access to this drop
+        if user.get('user_type') == 'external':
+            # External user - check if they have access to this drop
+            dynamodb_resource = boto3.resource('dynamodb')
+            users_table = dynamodb_resource.Table('FileExchangeUsers')
+            response = users_table.get_item(
+                Key={
+                    'tenant_id': user['tenant_id'],
+                    'user_id': user['username']
+                }
+            )
+            if 'Item' not in response:
+                return jsonify({'error': 'Access denied'}), 403
+            
+            user_data = response['Item']
+            drop_access = user_data.get('drop_access', {})
+            if drop_id not in drop_access:
+                return jsonify({'error': 'Access denied to this drop'}), 403
+            
+            permissions = drop_access[drop_id].get('permissions', [])
+            if 'upload' not in permissions:
+                return jsonify({'error': 'Upload permission denied'}), 403
+        
+        # Upload files to S3
+        s3_client = aws_factory.get_s3_client()
+        bucket_name = os.environ['S3_BUCKET_NAME']
+        uploaded_files = []
+        
+        for file in files:
+            if file.filename:
+                # Clean up the path
+                safe_path = current_path.strip('/') if current_path else ''
+                if safe_path:
+                    s3_key = f"{user['tenant_id']}/drops/{drop_id}/{safe_path}/{file.filename}"
+                else:
+                    s3_key = f"{user['tenant_id']}/drops/{drop_id}/{file.filename}"
+                
+                # Upload to S3
+                s3_client.upload_fileobj(
+                    file,
+                    bucket_name,
+                    s3_key
+                )
+                uploaded_files.append(file.filename)
+        
+        return jsonify({
+            'success': True,
+            'message': f'Uploaded {len(uploaded_files)} file(s)',
+            'files': uploaded_files
+        })
+        
+    except Exception as e:
+        print(f"Error uploading files: {e}")
+        return jsonify({'error': f'Upload failed: {str(e)}'}), 500
+
+@app.route('/download/<path:file_path>')
+def download_file(file_path):
+    """Handle file downloads"""
+    user = get_user_from_session()
+    if not user:
+        return redirect(url_for('login'))
+    
+    try:
+        # Extract drop_id from file_path
+        path_parts = file_path.split('/')
+        if len(path_parts) < 3 or path_parts[0] != 'drops':
+            return "Invalid file path", 400
+        
+        drop_id = path_parts[1]
+        
+        # Verify user has access to this drop and download permission
+        if user.get('user_type') == 'external':
+            # External user - check using session data
+            if drop_id not in user.get('drops_access', []):
+                return "Access denied to this drop", 403
+            
+            if 'download' not in user.get('permissions', []):
+                return "Download permission denied", 403
+            
+            # Use host tenant ID for S3 operations
+            tenant_id = user.get('host_tenant_id', user['tenant_id'])
+        else:
+            # Internal users have full access
+            tenant_id = user['tenant_id']
+        
+        # Generate S3 presigned URL for download
+        s3_client = aws_factory.get_s3_client()
+        bucket_name = os.environ['S3_BUCKET_NAME']
+        s3_key = f"{tenant_id}/{file_path}"
+        
+        print(f"DEBUG: Download - User: {user['username']}, S3 key: {s3_key}")
+        
+        # Generate presigned URL
+        presigned_url = s3_client.generate_presigned_url(
+            'get_object',
+            Params={'Bucket': bucket_name, 'Key': s3_key},
+            ExpiresIn=3600  # URL expires in 1 hour
+        )
+        
+        return redirect(presigned_url)
+        
+    except Exception as e:
+        print(f"Error downloading file: {e}")
+        return f"Download failed: {str(e)}", 500
+
+@app.route('/delete-file', methods=['POST'])
+def delete_file():
+    """Handle file deletion"""
+    user = get_user_from_session()
+    if not user:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        data = request.get_json()
+        file_path = data.get('file_path')
+        
+        if not file_path:
+            return jsonify({'error': 'No file path provided'}), 400
+        
+        # Extract drop_id from file_path
+        path_parts = file_path.split('/')
+        if len(path_parts) < 3 or path_parts[0] != 'drops':
+            return jsonify({'error': 'Invalid file path'}), 400
+        
+        drop_id = path_parts[1]
+        
+        # Verify user has access to this drop (only internal users can delete for now)
+        if user.get('user_type') == 'external':
+            return jsonify({'error': 'External users cannot delete files'}), 403
+        
+        # Delete from S3
+        s3_client = aws_factory.get_s3_client()
+        bucket_name = os.environ['S3_BUCKET_NAME']
+        s3_key = f"{user['tenant_id']}/{file_path}"
+        
+        s3_client.delete_object(Bucket=bucket_name, Key=s3_key)
+        
+        return jsonify({'success': True, 'message': 'File deleted successfully'})
+        
+    except Exception as e:
+        print(f"Error deleting file: {e}")
+        return jsonify({'error': f'Delete failed: {str(e)}'}), 500
+
+@app.route('/create-folder', methods=['POST'])
+def create_folder():
+    """Create a new folder in a drop"""
+    user = get_user_from_session()
+    if not user:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        data = request.get_json()
+        folder_name = data.get('folder_name', '').strip()
+        current_path = data.get('current_path', '').strip()
+        
+        if not folder_name:
+            return jsonify({'error': 'Folder name is required'}), 400
+        
+        # Extract drop_id from current_path
+        path_parts = current_path.split('/')
+        if len(path_parts) < 3 or path_parts[0] != 'drops':
+            return jsonify({'error': 'Invalid path'}), 400
+        
+        drop_id = path_parts[1]
+        
+        # Verify user has access to this drop
+        if user.get('user_type') == 'external':
+            # External user - check if they have access to this drop
+            dynamodb_resource = boto3.resource('dynamodb')
+            users_table = dynamodb_resource.Table('FileExchangeUsers')
+            response = users_table.get_item(
+                Key={
+                    'tenant_id': user['tenant_id'],
+                    'user_id': user['username']
+                }
+            )
+            if 'Item' not in response:
+                return jsonify({'error': 'Access denied'}), 403
+            
+            user_data = response['Item']
+            drop_access = user_data.get('drop_access', {})
+            if drop_id not in drop_access:
+                return jsonify({'error': 'Access denied to this drop'}), 403
+            
+            permissions = drop_access[drop_id].get('permissions', [])
+            if 'upload' not in permissions:  # Folder creation requires upload permission
+                return jsonify({'error': 'Permission denied'}), 403
+        
+        # Create folder by uploading an empty marker file
+        s3_client = aws_factory.get_s3_client()
+        bucket_name = os.environ['S3_BUCKET_NAME']
+        
+        # Clean up the path and create folder marker
+        clean_path = current_path.strip('/')
+        folder_path = f"{clean_path}/{folder_name}/" if clean_path != f'drops/{drop_id}' else f"drops/{drop_id}/{folder_name}/"
+        s3_key = f"{user['tenant_id']}/{folder_path}.keep"
+        
+        # Upload empty marker file
+        s3_client.put_object(
+            Bucket=bucket_name,
+            Key=s3_key,
+            Body=b'',
+            ContentType='application/octet-stream'
+        )
+        
+        return jsonify({'success': True, 'message': f'Folder "{folder_name}" created successfully'})
+        
+    except Exception as e:
+        print(f"Error creating folder: {e}")
+        return jsonify({'error': f'Folder creation failed: {str(e)}'}), 500
 
 if __name__ == '__main__':
     # Check required environment variables

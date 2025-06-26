@@ -1,0 +1,30 @@
+#!/bin/bash
+
+echo "🔍 Running pre-commit tests..."
+
+# Activate virtual environment
+source .venv/bin/activate
+
+# Run unit tests (fast feedback)
+echo "📋 Running unit tests..."
+if ! ./run_tests.sh unit; then
+    echo "❌ Unit tests failed. Commit aborted."
+    exit 1
+fi
+
+# Run integration tests (moderate speed)
+echo "🔗 Running integration tests..."
+if ! ./run_tests.sh integration; then
+    echo "❌ Integration tests failed. Commit aborted."
+    exit 1
+fi
+
+# Check for obvious syntax errors
+echo "🔍 Checking Python syntax..."
+if ! python -m py_compile app.py invitation_system.py create_tenant.py; then
+    echo "❌ Syntax errors found. Commit aborted."
+    exit 1
+fi
+
+echo "✅ All pre-commit tests passed!"
+exit 0 

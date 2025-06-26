@@ -20,7 +20,7 @@ class ProductionConfig:
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
     
-    # AWS settings (loaded from environment)
+    # AWS settings (loaded from environment) - consolidated to us-east-2
     AWS_DEFAULT_REGION = os.environ.get('AWS_DEFAULT_REGION', 'us-east-2')
     CLIENT_FILES_BUCKET = os.environ.get('CLIENT_FILES_BUCKET')
     TENANT_TABLE_NAME = os.environ.get('TENANT_TABLE_NAME')

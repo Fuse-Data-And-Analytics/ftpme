@@ -20,7 +20,13 @@
             </div>
             <div class="text-right">
                 <div class="text-sm text-gray-500">Company Role</div>
-                <div class="text-lg font-medium text-gray-900">{{ user.role.title() }}</div>
+                <div class="text-lg font-medium text-gray-900">
+                    {% if user.user_type == 'external' %}
+                        External User
+                    {% else %}
+                        {{ user.role.title() }}
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
