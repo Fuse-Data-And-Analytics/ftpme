@@ -111,6 +111,7 @@
                         <h3 class="text-lg font-medium text-gray-900">Internal Team Members</h3>
                         <p class="mt-1 text-sm text-gray-500">Company employees with access to this drop</p>
                     </div>
+                    {% if can_manage_users %}
                     <button id="addInternalBtn" 
                             class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                         <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -118,6 +119,14 @@
                         </svg>
                         Add Team Member
                     </button>
+                    {% else %}
+                    <span class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-500 bg-gray-100 cursor-not-allowed">
+                        <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                        Add Team Member (Admin Only)
+                    </span>
+                    {% endif %}
                 </div>
             </div>
             <div class="px-6 py-4">
@@ -141,13 +150,33 @@
                         </div>
                     </div>
                     
+                    <!-- Existing internal users list -->
+                    {% for internal_user in drop.internal_users %}
+                    <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                                <span class="text-sm font-medium text-blue-600">{{ internal_user[0].upper() }}</span>
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">{{ internal_user }}</div>
+                                <div class="text-sm text-gray-500">Internal User</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                Team Member
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    
                     <!-- Add more team members section -->
                     <div class="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
                         <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                         </svg>
                         <h3 class="mt-2 text-sm font-medium text-gray-900">Add team members</h3>
-                        <p class="mt-1 text-sm text-gray-500">Invite colleagues from your company to collaborate on this drop</p>
+                        <p class="mt-1 text-sm text-gray-500">Create new internal users or add existing ones to collaborate on this drop</p>
                     </div>
                 </div>
             </div>
@@ -161,6 +190,7 @@
                         <h3 class="text-lg font-medium text-gray-900">External Collaborators</h3>
                         <p class="mt-1 text-sm text-gray-500">Partners, clients, or vendors from other companies</p>
                     </div>
+                    {% if can_invite_external %}
                     <button id="addExternalBtn" 
                             class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                         <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -168,6 +198,14 @@
                         </svg>
                         Invite External User
                     </button>
+                    {% else %}
+                    <span class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-500 bg-gray-100 cursor-not-allowed">
+                        <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                        Invite External User (No Permission)
+                    </span>
+                    {% endif %}
                 </div>
             </div>
             <div class="px-6 py-4">
@@ -178,9 +216,15 @@
                     <h3 class="mt-2 text-sm font-medium text-gray-900">No external collaborators yet</h3>
                     <p class="mt-1 text-sm text-gray-500">Invite partners, clients, or vendors to securely share files</p>
                     <div class="mt-6">
+                        {% if can_invite_external %}
                         <button id="sendFirstInvitationBtn" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                             Send first invitation
                         </button>
+                        {% else %}
+                        <span class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-500 bg-gray-100 cursor-not-allowed">
+                            Send first invitation (No Permission)
+                        </span>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -361,6 +405,217 @@
     </div>
 </div>
 
+<!-- Internal User Management Modal -->
+<div id="addInternalUserModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 xl:w-2/5 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between pb-4 border-b">
+                <h3 class="text-lg font-medium text-gray-900">Add Internal User to {{ drop.name }}</h3>
+                <button id="closeAddInternalUserModal" class="text-gray-400 hover:text-gray-600">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="mt-4">
+                <form id="addInternalUserForm" class="space-y-6">
+                    <!-- User Creation Type -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-3">User Creation</label>
+                        <div class="space-y-3">
+                            <div class="flex items-center">
+                                <input id="createNewUser" name="creation_type" type="radio" value="new" checked
+                                       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
+                                <label for="createNewUser" class="ml-3 block text-sm font-medium text-gray-700">
+                                    Create New Internal User
+                                </label>
+                            </div>
+                            <div class="flex items-center">
+                                <input id="addExistingUser" name="creation_type" type="radio" value="existing"
+                                       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
+                                <label for="addExistingUser" class="ml-3 block text-sm font-medium text-gray-700">
+                                    Add Existing Internal User
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- New User Fields -->
+                    <div id="newUserFields" class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="userName" class="block text-sm font-medium text-gray-700">Username</label>
+                                <input type="text" id="userName" name="username" required
+                                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                       placeholder="jsmith">
+                            </div>
+                            <div>
+                                <label for="userEmail" class="block text-sm font-medium text-gray-700">Email Address</label>
+                                <input type="email" id="userEmail" name="email" required
+                                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                       placeholder="john.smith@company.com">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Existing User Selection -->
+                    <div id="existingUserFields" class="hidden space-y-4">
+                        <div>
+                            <label for="existingUserSelect" class="block text-sm font-medium text-gray-700">Select Existing User</label>
+                            <select id="existingUserSelect" name="existing_user_id"
+                                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                <option value="">Choose a user...</option>
+                                <!-- Options will be populated dynamically -->
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- User Type -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-3">User Type</label>
+                        <div class="space-y-3">
+                            <div class="flex items-start">
+                                <input id="userTypeAdmin" name="user_type" type="radio" value="administrator" checked
+                                       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 mt-1">
+                                <div class="ml-3">
+                                    <label for="userTypeAdmin" class="block text-sm font-medium text-gray-700">
+                                        Administrator
+                                    </label>
+                                    <p class="text-sm text-gray-500">Can perform all actions, manage users, and configure settings</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <input id="userTypeCollaborator" name="user_type" type="radio" value="collaborator"
+                                       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 mt-1">
+                                <div class="ml-3">
+                                    <label for="userTypeCollaborator" class="block text-sm font-medium text-gray-700">
+                                        Collaborator
+                                    </label>
+                                    <p class="text-sm text-gray-500">Can access drops, upload/download files, and create folders</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Collaborator Permissions (only visible when collaborator is selected) -->
+                    <div id="collaboratorPermissions" class="hidden space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-3">Collaborator Permissions</label>
+                            <div class="space-y-2">
+                                <div class="flex items-center">
+                                    <input id="canInviteExternal" name="can_invite_external" type="checkbox" value="true"
+                                           class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                    <label for="canInviteExternal" class="ml-3 text-sm text-gray-700">
+                                        Can invite external users
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Access Method -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-3">Access Method</label>
+                        <div class="space-y-3">
+                            <div class="flex items-start">
+                                <input id="accessWeb" name="access_method" type="radio" value="web" checked
+                                       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 mt-1">
+                                <div class="ml-3">
+                                    <label for="accessWeb" class="block text-sm font-medium text-gray-700">
+                                        Web Access
+                                    </label>
+                                    <p class="text-sm text-gray-500">Access through the web interface only</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <input id="accessFTP" name="access_method" type="radio" value="ftp"
+                                       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 mt-1">
+                                <div class="ml-3">
+                                    <label for="accessFTP" class="block text-sm font-medium text-gray-700">
+                                        FTP Access
+                                    </label>
+                                    <p class="text-sm text-gray-500">Access through SFTP for technical users</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <input id="accessBoth" name="access_method" type="radio" value="both"
+                                       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 mt-1">
+                                <div class="ml-3">
+                                    <label for="accessBoth" class="block text-sm font-medium text-gray-700">
+                                        Both Web & FTP Access
+                                    </label>
+                                    <p class="text-sm text-gray-500">Full access through both methods</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SSH Key Upload (only visible when FTP access is selected) -->
+                    <div id="sshKeySection" class="hidden space-y-4">
+                        <div>
+                            <label for="sshKey" class="block text-sm font-medium text-gray-700">SSH Public Key</label>
+                            <textarea id="sshKey" name="ssh_key" rows="4"
+                                      class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                      placeholder="ssh-rsa AAAAB3NzaC1yc2EAAAA..."></textarea>
+                            <p class="mt-1 text-sm text-gray-500">Required for FTP access. Paste the user's SSH public key here.</p>
+                        </div>
+                    </div>
+
+                    <!-- Drop-specific Permissions -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-3">Drop Permissions</label>
+                        <div class="space-y-2">
+                            <div class="flex items-center">
+                                <input id="permRead" name="permissions" type="checkbox" value="read" checked disabled
+                                       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                <label for="permRead" class="ml-3 text-sm text-gray-700">
+                                    Read (view files and folders)
+                                </label>
+                            </div>
+                            <div class="flex items-center">
+                                <input id="permDownload" name="permissions" type="checkbox" value="download" checked
+                                       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                <label for="permDownload" class="ml-3 text-sm text-gray-700">
+                                    Download files
+                                </label>
+                            </div>
+                            <div class="flex items-center">
+                                <input id="permUpload" name="permissions" type="checkbox" value="upload" checked
+                                       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                <label for="permUpload" class="ml-3 text-sm text-gray-700">
+                                    Upload files
+                                </label>
+                            </div>
+                            <div class="flex items-center">
+                                <input id="permDelete" name="permissions" type="checkbox" value="delete"
+                                       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                <label for="permDelete" class="ml-3 text-sm text-gray-700">
+                                    Delete files and folders
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="flex justify-end space-x-3 pt-4 border-t">
+                        <button type="button" id="cancelAddInternalUser" 
+                                class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Cancel
+                        </button>
+                        <button type="submit" 
+                                class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Add User
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 // User menu toggle
 const userMenu = document.getElementById('userMenu');
@@ -462,9 +717,208 @@ window.addEventListener('click', (e) => {
     }
 });
 
-// Placeholder functionality for internal user management
+// Internal User Management modal functionality
+const addInternalUserModal = document.getElementById('addInternalUserModal');
+
 document.getElementById('addInternalBtn')?.addEventListener('click', () => {
-    alert('Internal user management coming soon! This will allow you to invite team members from your company.');
+    addInternalUserModal.classList.remove('hidden');
+    document.getElementById('userName').focus();
+});
+
+document.getElementById('closeAddInternalUserModal').addEventListener('click', () => {
+    addInternalUserModal.classList.add('hidden');
+});
+
+document.getElementById('cancelAddInternalUser').addEventListener('click', () => {
+    addInternalUserModal.classList.add('hidden');
+});
+
+// Handle creation type radio button changes
+const createNewUserRadio = document.getElementById('createNewUser');
+const addExistingUserRadio = document.getElementById('addExistingUser');
+const newUserFields = document.getElementById('newUserFields');
+const existingUserFields = document.getElementById('existingUserFields');
+
+createNewUserRadio.addEventListener('change', () => {
+    if (createNewUserRadio.checked) {
+        newUserFields.classList.remove('hidden');
+        existingUserFields.classList.add('hidden');
+        document.getElementById('userName').required = true;
+        document.getElementById('userEmail').required = true;
+        document.getElementById('existingUserSelect').required = false;
+    }
+});
+
+addExistingUserRadio.addEventListener('change', () => {
+    if (addExistingUserRadio.checked) {
+        newUserFields.classList.add('hidden');
+        existingUserFields.classList.remove('hidden');
+        document.getElementById('userName').required = false;
+        document.getElementById('userEmail').required = false;
+        document.getElementById('existingUserSelect').required = true;
+        // Load existing users
+        loadExistingUsers();
+    }
+});
+
+// Handle user type radio button changes
+const userTypeAdminRadio = document.getElementById('userTypeAdmin');
+const userTypeCollaboratorRadio = document.getElementById('userTypeCollaborator');
+const collaboratorPermissions = document.getElementById('collaboratorPermissions');
+const deletePermissionCheckbox = document.getElementById('permDelete');
+
+userTypeAdminRadio.addEventListener('change', () => {
+    if (userTypeAdminRadio.checked) {
+        collaboratorPermissions.classList.add('hidden');
+        // Administrators get all permissions by default
+        document.getElementById('permDownload').checked = true;
+        document.getElementById('permUpload').checked = true;
+        deletePermissionCheckbox.checked = true;
+        deletePermissionCheckbox.disabled = false;
+    }
+});
+
+userTypeCollaboratorRadio.addEventListener('change', () => {
+    if (userTypeCollaboratorRadio.checked) {
+        collaboratorPermissions.classList.remove('hidden');
+        // Collaborators don't get delete permission by default
+        deletePermissionCheckbox.checked = false;
+        deletePermissionCheckbox.disabled = true;
+    }
+});
+
+// Handle access method radio button changes
+const accessWebRadio = document.getElementById('accessWeb');
+const accessFTPRadio = document.getElementById('accessFTP');
+const accessBothRadio = document.getElementById('accessBoth');
+const sshKeySection = document.getElementById('sshKeySection');
+
+function updateSSHKeySection() {
+    const requiresSSH = accessFTPRadio.checked || accessBothRadio.checked;
+    if (requiresSSH) {
+        sshKeySection.classList.remove('hidden');
+        document.getElementById('sshKey').required = true;
+    } else {
+        sshKeySection.classList.add('hidden');
+        document.getElementById('sshKey').required = false;
+    }
+}
+
+accessWebRadio.addEventListener('change', updateSSHKeySection);
+accessFTPRadio.addEventListener('change', updateSSHKeySection);
+accessBothRadio.addEventListener('change', updateSSHKeySection);
+
+// Load existing users function
+function loadExistingUsers() {
+    fetch('/api/internal-users')
+        .then(response => response.json())
+        .then(data => {
+            const select = document.getElementById('existingUserSelect');
+            // Clear existing options except the first one
+            select.innerHTML = '<option value="">Choose a user...</option>';
+            
+            if (data.success && data.users) {
+                data.users.forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user.user_id;
+                    option.textContent = `${user.username || user.user_id} (${user.email})`;
+                    select.appendChild(option);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error loading existing users:', error);
+        });
+}
+
+// Submit internal user form
+document.getElementById('addInternalUserForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    
+    const form = e.target;
+    const formData = new FormData(form);
+    
+    // Collect form data
+    const data = {
+        drop_id: '{{ drop.id }}',
+        creation_type: formData.get('creation_type'),
+        user_type: formData.get('user_type'),
+        access_method: formData.get('access_method'),
+        permissions: Array.from(form.querySelectorAll('input[name="permissions"]:checked')).map(cb => cb.value)
+    };
+    
+    // Add user-specific data based on creation type
+    if (data.creation_type === 'new') {
+        data.username = formData.get('username');
+        data.email = formData.get('email');
+    } else {
+        data.existing_user_id = formData.get('existing_user_id');
+        if (!data.existing_user_id) {
+            alert('Please select an existing user');
+            return;
+        }
+    }
+    
+    // Add SSH key if required
+    if (data.access_method === 'ftp' || data.access_method === 'both') {
+        data.ssh_key = formData.get('ssh_key');
+        if (!data.ssh_key) {
+            alert('SSH key is required for FTP access');
+            return;
+        }
+    }
+    
+    // Add collaborator-specific permissions
+    if (data.user_type === 'collaborator') {
+        data.can_invite_external = formData.get('can_invite_external') === 'true';
+    }
+    
+    // Validate required fields
+    if (data.creation_type === 'new' && (!data.username || !data.email)) {
+        alert('Please fill in username and email');
+        return;
+    }
+    
+    if (data.permissions.length === 0) {
+        alert('Please select at least one permission');
+        return;
+    }
+    
+    // Send request
+    fetch('/api/add-internal-user', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            alert(`Internal user ${data.creation_type === 'new' ? 'created' : 'added'} successfully!`);
+            addInternalUserModal.classList.add('hidden');
+            form.reset();
+            // Reset form state
+            newUserFields.classList.remove('hidden');
+            existingUserFields.classList.add('hidden');
+            collaboratorPermissions.classList.add('hidden');
+            sshKeySection.classList.add('hidden');
+            // Reload page to show updated user list
+            location.reload();
+        } else {
+            alert(`Error: ${result.error}`);
+        }
+    })
+    .catch(error => {
+        alert(`Error: ${error.message}`);
+    });
+});
+
+// Close modal when clicking outside
+window.addEventListener('click', (e) => {
+    if (e.target === addInternalUserModal) {
+        addInternalUserModal.classList.add('hidden');
+    }
 });
 
 // Delete drop functionality

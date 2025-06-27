@@ -19,13 +19,11 @@ class InvitationSystem:
         self.is_development = os.environ.get('FLASK_ENV') == 'development' or os.environ.get('DEBUG', 'False').lower() == 'true'
         
         if self.is_development:
-            # For development: use verified email or mock
+            # For development: use verified email
             self.sender_email = os.environ.get('SES_VERIFIED_EMAIL', 'test@example.com')
-            self.mock_email = os.environ.get('MOCK_EMAIL', 'False').lower() == 'true'
         else:
             # For production: use custom domain
             self.sender_email = 'noreply@ftpme.com'
-            self.mock_email = False
         
     def invite_internal_user(self, tenant_id, drop_id, inviter_email, invitee_email, role='member'):
         """Invite an internal company user to a drop"""
@@ -168,6 +166,32 @@ class InvitationSystem:
         }
         
         self.users_table.put_item(Item=user_record)
+        
+        # Update the drop record to include this external user
+        self._add_external_user_to_drop(invitation['tenant_id'], invitation['drop_id'], user_info['username'])
+    
+    def _add_external_user_to_drop(self, tenant_id, drop_id, username):
+        """Add external user to the drop's external_users list"""
+        try:
+            # Get the main tenant table
+            dynamodb_client = boto3.client('dynamodb')
+            tenant_table_name = os.environ.get('TENANT_TABLE_NAME', 'FileExchangeTenants')
+            
+            # Update the drop record to add the external user
+            dynamodb_client.update_item(
+                TableName=tenant_table_name,
+                Key={
+                    'tenant_id': {'S': tenant_id},
+                    'user_id': {'S': f'DROP#{drop_id}'}
+                },
+                UpdateExpression='ADD external_users :user',
+                ExpressionAttributeValues={
+                    ':user': {'L': [{'S': username}]}
+                }
+            )
+        except Exception as e:
+            print(f"Error adding external user to drop: {e}")
+            # Don't fail the invitation process if this update fails
     
     def _send_internal_invitation_email(self, invitation):
         """Send invitation email to internal user"""
@@ -293,18 +317,7 @@ The FTPme Team"""
         self._send_email(invitation['invitee_email'], subject, body)
     
     def _send_email(self, to_email, subject, body):
-        """Send email via SES or mock for development"""
-        
-        if self.mock_email:
-            # Mock email for development
-            print("🔥 MOCK EMAIL SENT 🔥")
-            print(f"TO: {to_email}")
-            print(f"FROM: {self.sender_email}")
-            print(f"SUBJECT: {subject}")
-            print(f"BODY:\n{body}")
-            print("="*60)
-            return
-        
+        """Send email via SES"""
         try:
             response = self.ses.send_email(
                 Source=self.sender_email,
@@ -318,8 +331,8 @@ The FTPme Team"""
         except Exception as e:
             print(f"❌ Failed to send email to {to_email}: {e}")
             if self.is_development:
-                # For development, also print the email content
-                print(f"📧 EMAIL CONTENT (would have been sent):")
+                # For development, also print the email content for debugging
+                print(f"📧 EMAIL CONTENT (failed to send):")
                 print(f"TO: {to_email}")
                 print(f"FROM: {self.sender_email}")
                 print(f"SUBJECT: {subject}")

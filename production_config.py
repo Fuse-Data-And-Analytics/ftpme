@@ -25,6 +25,7 @@ class ProductionConfig:
     CLIENT_FILES_BUCKET = os.environ.get('CLIENT_FILES_BUCKET')
     TENANT_TABLE_NAME = os.environ.get('TENANT_TABLE_NAME')
     TRANSFER_SERVER_ID = os.environ.get('TRANSFER_SERVER_ID')
+    SES_VERIFIED_EMAIL = os.environ.get('SES_VERIFIED_EMAIL', 'noreply@ftpme.com')
 
 class GunicornConfig:
     """Gunicorn WSGI server configuration for production"""

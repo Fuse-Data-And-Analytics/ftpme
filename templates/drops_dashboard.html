@@ -52,6 +52,7 @@
                 </div>
                 
                 <div class="flex items-center space-x-3">
+                    {% if user.user_type != 'external' %}
                     <button id="createDropBtn" 
                             class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                         <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -59,6 +60,7 @@
                         </svg>
                         Create New Drop
                     </button>
+                    {% endif %}
                     <div class="relative">
                         <button id="userMenuBtn" class="flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                             <div class="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
@@ -70,7 +72,7 @@
                                 <p class="font-medium">{{ user.username }}</p>
                                 <p class="text-gray-500">{{ user.email }}</p>
                             </div>
-                            <a href="{{ url_for('user_logout') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Sign out</a>
+                            <a href="{{ url_for('user_logout') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Sign Out</a>
                         </div>
                     </div>
                 </div>
@@ -149,8 +151,8 @@
                             </div>
                         </div>
                         <div class="ml-4">
-                            <div class="text-sm font-medium text-gray-500">Files Shared</div>
-                            <div class="text-2xl font-bold text-gray-900">{{ total_files or 0 }}</div>
+                            <div class="text-sm font-medium text-gray-500">File Explorer</div>
+                            <div class="text-2xl font-bold text-gray-900">{{ detailed_files|length or 0 }}</div>
                         </div>
                     </div>
                     <div class="opacity-0 group-hover:opacity-100 transition-opacity">
@@ -211,13 +213,7 @@
                                 <p class="text-sm text-gray-500">{{ drop.purpose or 'Business collaboration' }}</p>
                             </div>
                         </div>
-                        <div class="relative">
-                            <button class="text-gray-400 hover:text-gray-600">
-                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
-                                </svg>
-                            </button>
-                        </div>
+                        <!-- Removed menu icon as it performs no function -->
                     </div>
                 </div>
 
@@ -226,11 +222,11 @@
                     <div class="grid grid-cols-3 gap-4 mb-4">
                         <div class="text-center">
                             <div class="text-lg font-bold text-gray-900">{{ drop.internal_users|length or 0 }}</div>
-                            <div class="text-xs text-gray-500">Internal</div>
+                            <div class="text-xs text-gray-500">Company Users</div>
                         </div>
                         <div class="text-center">
                             <div class="text-lg font-bold text-gray-900">{{ drop.external_users|length or 0 }}</div>
-                            <div class="text-xs text-gray-500">External</div>
+                            <div class="text-xs text-gray-500">External Users</div>
                         </div>
                         <div class="text-center">
                             <div class="text-lg font-bold text-gray-900">{{ drop.files_count or 0 }}</div>
@@ -253,8 +249,9 @@
                             <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                             </svg>
-                            Files
+                            View Files
                         </a>
+                        {% if user.user_type != 'external' %}
                         <a href="{{ url_for('drop_settings', drop_id=drop.id) }}" 
                            class="flex-1 inline-flex items-center justify-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                             <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -263,6 +260,7 @@
                             </svg>
                             Manage
                         </a>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -371,113 +369,62 @@
                     </button>
                 </div>
 
-                <!-- Activity Stats -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-4">
-                        <div class="flex items-center">
-                            <div class="h-8 w-8 rounded-md bg-blue-200 flex items-center justify-center">
-                                <svg class="h-4 w-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
-                                </svg>
-                            </div>
-                            <div class="ml-3">
-                                <div class="text-sm font-medium text-blue-900">Files Uploaded</div>
-                                <div class="text-lg font-bold text-blue-900">{{ recent_uploads or 0 }}</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="bg-gradient-to-r from-green-50 to-green-100 rounded-lg p-4">
-                        <div class="flex items-center">
-                            <div class="h-8 w-8 rounded-md bg-green-200 flex items-center justify-center">
-                                <svg class="h-4 w-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/>
-                                </svg>
-                            </div>
-                            <div class="ml-3">
-                                <div class="text-sm font-medium text-green-900">New Collaborators</div>
-                                <div class="text-lg font-bold text-green-900">{{ new_collaborators or 0 }}</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg p-4">
-                        <div class="flex items-center">
-                            <div class="h-8 w-8 rounded-md bg-purple-200 flex items-center justify-center">
-                                <svg class="h-4 w-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                                </svg>
-                            </div>
-                            <div class="ml-3">
-                                <div class="text-sm font-medium text-purple-900">Drops Created</div>
-                                <div class="text-lg font-bold text-purple-900">{{ new_drops or 0 }}</div>
-                            </div>
-                        </div>
+                <!-- Date Filter -->
+                <div class="mb-6">
+                    <div class="flex items-center space-x-4">
+                        <label for="activityDateFilter" class="text-sm font-medium text-gray-700">Filter by:</label>
+                                        <select id="activityDateFilter" class="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    <option value="7" selected>Last 7 days</option>
+                    <option value="30">Last 30 days</option>
+                    <option value="90">Last 90 days</option>
+                </select>
                     </div>
                 </div>
+
 
                 <!-- Activity Timeline -->
                 <div class="bg-gray-50 rounded-lg p-6">
                     <h4 class="text-lg font-medium text-gray-900 mb-4">Activity Timeline (Last 7 Days)</h4>
                     <div class="space-y-4" id="activityTimeline">
-                        <!-- Activity items will be loaded here -->
+                        {% for activity in activity_timeline %}
                         <div class="flex items-start space-x-3">
                             <div class="flex-shrink-0">
-                                <div class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
-                                    <svg class="h-4 w-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div class="h-8 w-8 rounded-full bg-{{ activity.color }}-100 flex items-center justify-center">
+                                    {% if activity.icon == 'upload' %}
+                                    <svg class="h-4 w-4 text-{{ activity.color }}-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                                     </svg>
-                                </div>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="text-sm font-medium text-gray-900">File uploaded to Board Meeting</div>
-                                <div class="text-sm text-gray-500">Fuse_Discovery_Questions_Carousel.docx • 2 hours ago</div>
-                            </div>
-                        </div>
-                        
-                        <div class="flex items-start space-x-3">
-                            <div class="flex-shrink-0">
-                                <div class="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
-                                    <svg class="h-4 w-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    {% elif activity.icon == 'folder' %}
+                                    <svg class="h-4 w-4 text-{{ activity.color }}-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                                     </svg>
-                                </div>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="text-sm font-medium text-gray-900">Drop created: Board Meeting</div>
-                                <div class="text-sm text-gray-500">For quarterly board presentations • 1 day ago</div>
-                            </div>
-                        </div>
-                        
-                        <div class="flex items-start space-x-3">
-                            <div class="flex-shrink-0">
-                                <div class="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center">
-                                    <svg class="h-4 w-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                                    </svg>
-                                </div>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="text-sm font-medium text-gray-900">Drop created: Test Drop 2097C8C1</div>
-                                <div class="text-sm text-gray-500">Testing file sharing capabilities • 2 days ago</div>
-                            </div>
-                        </div>
-                        
-                        <div class="flex items-start space-x-3">
-                            <div class="flex-shrink-0">
-                                <div class="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center">
-                                    <svg class="h-4 w-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    {% elif activity.icon == 'users' %}
+                                    <svg class="h-4 w-4 text-{{ activity.color }}-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/>
                                     </svg>
+                                    {% endif %}
                                 </div>
                             </div>
                             <div class="flex-1 min-w-0">
-                                <div class="text-sm font-medium text-gray-900">Workspace initialized</div>
-                                <div class="text-sm text-gray-500">FTPme platform setup completed • 3 days ago</div>
+                                <div class="text-sm font-medium text-gray-900">{{ activity.title }}</div>
+                                <div class="text-sm text-gray-500">{{ activity.description }}</div>
                             </div>
                         </div>
+                        {% endfor %}
+                        
+                        {% if not activity_timeline %}
+                        <div class="text-center text-gray-500 py-4">
+                            <svg class="h-8 w-8 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <p class="text-sm">No recent activity to display</p>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
 
                 <!-- Quick Actions -->
+                {% if user.user_type != 'external' %}
                 <div class="mt-6 bg-white border border-gray-200 rounded-lg p-4">
                     <h4 class="text-sm font-medium text-gray-900 mb-3">Quick Actions</h4>
                     <div class="flex flex-wrap gap-2">
@@ -501,6 +448,7 @@
                         </button>
                     </div>
                 </div>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -525,33 +473,7 @@
                     </button>
                 </div>
 
-                <!-- Drops Summary Stats -->
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                    <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-4">
-                        <div class="text-center">
-                            <div class="text-2xl font-bold text-blue-900">{{ total_drops or 0 }}</div>
-                            <div class="text-sm text-blue-700">Total Drops</div>
-                        </div>
-                    </div>
-                    <div class="bg-gradient-to-r from-green-50 to-green-100 rounded-lg p-4">
-                        <div class="text-center">
-                            <div class="text-2xl font-bold text-green-900">{{ drops|selectattr('files_count', 'gt', 0)|list|length or 0 }}</div>
-                            <div class="text-sm text-green-700">With Files</div>
-                        </div>
-                    </div>
-                    <div class="bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg p-4">
-                        <div class="text-center">
-                            <div class="text-2xl font-bold text-purple-900">{{ drops|map(attribute='internal_users')|map('length')|sum + drops|map(attribute='external_users')|map('length')|sum or 0 }}</div>
-                            <div class="text-sm text-purple-700">Total Members</div>
-                        </div>
-                    </div>
-                    <div class="bg-gradient-to-r from-orange-50 to-orange-100 rounded-lg p-4">
-                        <div class="text-center">
-                            <div class="text-2xl font-bold text-orange-900">{{ new_drops or 0 }}</div>
-                            <div class="text-sm text-orange-700">Recently Created</div>
-                        </div>
-                    </div>
-                </div>
+
 
                 <!-- Drops List -->
                 <div class="bg-gray-50 rounded-lg p-6">
@@ -585,10 +507,12 @@
                                            class="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200">
                                             View Files
                                         </a>
+                                        {% if user.user_type != 'external' %}
                                         <a href="{{ url_for('drop_settings', drop_id=drop.id) }}" 
                                            class="inline-flex items-center px-2 py-1 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50">
                                             Settings
                                         </a>
+                                        {% endif %}
                                     </div>
                                 </div>
                             </div>
@@ -607,7 +531,8 @@
                     </div>
                 </div>
 
-                <!-- Quick Actions -->
+                <!-- Drop Management Actions -->
+                {% if user.user_type != 'external' %}
                 <div class="mt-6 bg-white border border-gray-200 rounded-lg p-4">
                     <h4 class="text-sm font-medium text-gray-900 mb-3">Drop Management</h4>
                     <div class="flex flex-wrap gap-2">
@@ -632,6 +557,7 @@
                         </button>
                     </div>
                 </div>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -656,52 +582,11 @@
                     </button>
                 </div>
 
-                <!-- Collaborator Stats -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    <div class="bg-gradient-to-r from-green-50 to-green-100 rounded-lg p-4">
-                        <div class="flex items-center">
-                            <div class="h-8 w-8 rounded-md bg-green-200 flex items-center justify-center">
-                                <svg class="h-4 w-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                                </svg>
-                            </div>
-                            <div class="ml-3">
-                                <div class="text-sm font-medium text-green-900">Internal Users</div>
-                                <div class="text-lg font-bold text-green-900">{{ total_collaborators or 0 }}</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-4">
-                        <div class="flex items-center">
-                            <div class="h-8 w-8 rounded-md bg-blue-200 flex items-center justify-center">
-                                <svg class="h-4 w-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
-                                </svg>
-                            </div>
-                            <div class="ml-3">
-                                <div class="text-sm font-medium text-blue-900">External Guests</div>
-                                <div class="text-lg font-bold text-blue-900">0</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg p-4">
-                        <div class="flex items-center">
-                            <div class="h-8 w-8 rounded-md bg-purple-200 flex items-center justify-center">
-                                <svg class="h-4 w-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                            </div>
-                            <div class="ml-3">
-                                <div class="text-sm font-medium text-purple-900">Recently Active</div>
-                                <div class="text-lg font-bold text-purple-900">{{ total_collaborators or 0 }}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+
 
                 <!-- User Management -->
                 <div class="bg-gray-50 rounded-lg p-6">
-                    <h4 class="text-lg font-medium text-gray-900 mb-4">User Management</h4>
+                    <h4 class="text-lg font-medium text-gray-900 mb-4">Company Users</h4>
                     <div class="space-y-3">
                         {% for tenant_user in tenant_users %}
                         <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
@@ -712,10 +597,15 @@
                                     </div>
                                     <div>
                                         <h5 class="font-medium text-gray-900">{{ tenant_user.user_id or 'Unknown' }}</h5>
+                                        {% if user.user_type != 'external' %}
                                         <p class="text-sm text-gray-500">{{ tenant_user.email or 'No email' }} • {{ tenant_user.role.title() if tenant_user.role else 'User' }}</p>
+                                        {% else %}
+                                        <p class="text-sm text-gray-500">{{ tenant_user.role.title() if tenant_user.role else 'User' }}</p>
+                                        {% endif %}
                                     </div>
                                 </div>
                                 <div class="flex items-center space-x-4">
+                                    {% if user.user_type != 'external' and tenant_user.role != 'admin' %}
                                     <div class="text-center">
                                         <div class="text-sm font-medium text-gray-900">
                                             {% set user_drops = [] %}
@@ -728,13 +618,17 @@
                                         </div>
                                         <div class="text-xs text-gray-500">Drops</div>
                                     </div>
-                                    <div class="flex items-center space-x-1">
-                                        <div class="h-2 w-2 bg-green-400 rounded-full"></div>
-                                        <span class="text-xs text-gray-500">Active</span>
+                                    {% elif user.user_type != 'external' and tenant_user.role == 'admin' %}
+                                    <div class="text-center">
+                                        <div class="text-sm font-medium text-gray-900">{{ drops|length or 0 }}</div>
+                                        <div class="text-xs text-gray-500">Drops</div>
                                     </div>
+                                    {% endif %}
+                                    {% if user.user_type != 'external' %}
                                     <button class="inline-flex items-center px-2 py-1 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50">
                                         Manage
                                     </button>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -756,36 +650,76 @@
                 <div class="mt-6 bg-gray-50 rounded-lg p-6">
                     <div class="flex items-center justify-between mb-4">
                         <h4 class="text-lg font-medium text-gray-900">External Collaborators</h4>
+                        {% if user.user_type != 'external' %}
                         <button id="inviteExternalUserBtn" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
                             <svg class="h-3 w-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                             </svg>
                             Invite External User
                         </button>
+                        {% endif %}
                     </div>
                     <p class="text-sm text-gray-600 mb-4">Partners, clients, or vendors from other companies</p>
                     
-                    <!-- External Users List (will show when we have external users) -->
+                    <!-- External Users List -->
                     <div class="space-y-3">
-                        <!-- Empty state for now -->
+                        {% for ext_user in external_users_info %}
+                        <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                                        <span class="text-sm font-medium text-blue-600">{{ ext_user.user_id[0].upper() if ext_user.user_id else '?' }}</span>
+                                    </div>
+                                    <div>
+                                        <h5 class="font-medium text-gray-900">{{ ext_user.user_id or 'Unknown' }}</h5>
+                                        {% if user.user_type != 'external' %}
+                                        <p class="text-sm text-gray-500">{{ ext_user.email or 'No email' }} • External User</p>
+                                        {% else %}
+                                        <p class="text-sm text-gray-500">External User</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-4">
+                                    {% if user.user_type != 'external' %}
+                                    <div class="text-center">
+                                        <div class="text-sm font-medium text-gray-900">{{ ext_user.drops_access|length or 0 }}</div>
+                                        <div class="text-xs text-gray-500">Drops</div>
+                                    </div>
+                                    {% endif %}
+                                    {% if user.user_type != 'external' %}
+                                    <button class="inline-flex items-center px-2 py-1 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50">
+                                        Manage
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        
+                        {% if not external_users_info %}
+                        <!-- Empty state -->
                         <div class="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg">
                             <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
                             </svg>
                             <h3 class="mt-2 text-sm font-medium text-gray-900">No external collaborators yet</h3>
                             <p class="mt-1 text-sm text-gray-500">Invite partners, clients, or vendors to securely share files</p>
+                            {% if user.user_type != 'external' %}
                             <div class="mt-6">
                                 <button id="sendFirstInvitationBtn" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
                                     Send first invitation
                                 </button>
                             </div>
+                            {% endif %}
                         </div>
+                        {% endif %}
                     </div>
                 </div>
 
-                <!-- Quick Actions -->
+                <!-- User Management Actions -->
+                {% if user.user_type != 'external' %}
                 <div class="mt-6 bg-white border border-gray-200 rounded-lg p-4">
-                    <h4 class="text-sm font-medium text-gray-900 mb-3">User Management</h4>
+                    <h4 class="text-sm font-medium text-gray-900 mb-3">Company Users</h4>
                     <div class="flex flex-wrap gap-2">
                         <a href="{{ url_for('create_user') }}" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
                             <svg class="h-3 w-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -807,22 +741,24 @@
                         </button>
                     </div>
                 </div>
+                {% endif %}
             </div>
         </div>
     </div>
 
-    <!-- Files Shared Modal -->
+    <!-- File Explorer Modal -->
     <div id="filesSharedModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-        <div class="relative top-10 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-md bg-white">
+        <div class="relative top-5 mx-auto p-5 border w-full max-w-6xl shadow-lg rounded-md bg-white">
             <div class="mt-3">
                 <div class="flex items-center justify-between mb-6">
                     <div class="flex items-center">
                         <div class="h-8 w-8 rounded-md bg-purple-100 flex items-center justify-center mr-3">
                             <svg class="h-5 w-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z"/>
                             </svg>
                         </div>
-                        <h3 class="text-xl font-semibold text-gray-900">Files Overview</h3>
+                        <h3 class="text-xl font-semibold text-gray-900">File Explorer</h3>
                     </div>
                     <button id="closeFilesSharedModal" class="text-gray-400 hover:text-gray-600">
                         <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -831,80 +767,135 @@
                     </button>
                 </div>
 
-                <!-- File Stats -->
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                    <div class="bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg p-4">
-                        <div class="text-center">
-                            <div class="text-2xl font-bold text-purple-900">{{ total_files or 0 }}</div>
-                            <div class="text-sm text-purple-700">Total Files</div>
-                        </div>
-                    </div>
-                    <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-4">
-                        <div class="text-center">
-                            <div class="text-2xl font-bold text-blue-900">{{ drops|map(attribute='files_count')|sum or 0 }}</div>
-                            <div class="text-sm text-blue-700">In Drops</div>
-                        </div>
-                    </div>
-                    <div class="bg-gradient-to-r from-green-50 to-green-100 rounded-lg p-4">
-                        <div class="text-center">
-                            <div class="text-2xl font-bold text-green-900">{{ recent_uploads or 0 }}</div>
-                            <div class="text-sm text-green-700">Recent Uploads</div>
-                        </div>
-                    </div>
-                    <div class="bg-gradient-to-r from-orange-50 to-orange-100 rounded-lg p-4">
-                        <div class="text-center">
-                            <div class="text-2xl font-bold text-orange-900">~{{ ((drops|map(attribute='files_count')|sum or 0) * 0.5)|round|int }}MB</div>
-                            <div class="text-sm text-orange-700">Est. Storage</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Files by Drop -->
-                <div class="bg-gray-50 rounded-lg p-6">
-                    <h4 class="text-lg font-medium text-gray-900 mb-4">Files by Drop</h4>
-                    <div class="space-y-4">
-                        {% for drop in drops %}
-                        {% if drop.files_count > 0 %}
-                        <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center space-x-3">
-                                    <div class="h-10 w-10 rounded-lg bg-{{ drop.color or 'blue' }}-100 flex items-center justify-center">
-                                        <svg class="h-5 w-5 text-{{ drop.color or 'blue' }}-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <h5 class="font-medium text-gray-900">{{ drop.name }}</h5>
-                                        <p class="text-sm text-gray-500">{{ drop.files_count }} file{{ 's' if drop.files_count != 1 else '' }}</p>
-                                    </div>
+                <!-- Search and Filter Bar -->
+                <div class="mb-6 bg-gray-50 rounded-lg p-4">
+                    <div class="flex flex-col md:flex-row gap-4">
+                        <!-- Search Input -->
+                        <div class="flex-1">
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                    </svg>
                                 </div>
-                                <div class="flex items-center space-x-2">
-                                    <div class="w-32 bg-gray-200 rounded-full h-2">
-                                        <div class="bg-{{ drop.color or 'blue' }}-500 h-2 rounded-full" style="width: {{ (drop.files_count / (drops|map(attribute='files_count')|max or 1) * 100)|round }}%"></div>
-                                    </div>
-                                    <a href="{{ url_for('drop_files', drop_id=drop.id) }}" 
-                                       class="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200">
-                                        View Files
-                                    </a>
-                                </div>
+                                <input type="text" id="fileSearchInput" placeholder="Search files..." 
+                                       class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-purple-500 focus:border-purple-500 sm:text-sm">
                             </div>
                         </div>
-                        {% endif %}
-                        {% endfor %}
                         
-                        {% if not (drops|selectattr('files_count', 'gt', 0)|list) %}
-                        <div class="text-center py-8">
-                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                            </svg>
-                            <h3 class="mt-2 text-sm font-medium text-gray-900">No files uploaded yet</h3>
-                            <p class="mt-1 text-sm text-gray-500">Start sharing files by uploading to your drops.</p>
+                        <!-- Filter Dropdowns -->
+                        <div class="flex gap-2">
+                            <select id="dropFilter" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm rounded-md">
+                                <option value="">All Drops</option>
+                                {% for drop in drops %}
+                                <option value="{{ drop.id }}">{{ drop.name }}</option>
+                                {% endfor %}
+                            </select>
+                            
+                            <select id="typeFilter" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm rounded-md">
+                                <option value="">All Types</option>
+                                <option value="document">Documents</option>
+                                <option value="image">Images</option>
+                                <option value="pdf">PDFs</option>
+                                <option value="spreadsheet">Spreadsheets</option>
+                                <option value="presentation">Presentations</option>
+                                <option value="archive">Archives</option>
+                                <option value="other">Other</option>
+                            </select>
                         </div>
-                        {% endif %}
                     </div>
                 </div>
 
-                <!-- Quick Actions -->
+
+
+                <!-- Files List -->
+                <div class="bg-white border border-gray-200 rounded-lg">
+                    <div class="px-4 py-3 border-b border-gray-200 bg-gray-50">
+                        <h4 class="text-lg font-medium text-gray-900">All Files</h4>
+                    </div>
+                    
+                    <div class="max-h-96 overflow-y-auto">
+                        <div id="filesList">
+                            {% for file in detailed_files %}
+                            <div class="file-item border-b border-gray-100 hover:bg-gray-50" 
+                                 data-filename="{{ file.name|lower }}" 
+                                 data-drop="{{ file.drop_id }}" 
+                                 data-type="{{ file.file_type }}">
+                                <div class="px-4 py-3 flex items-center justify-between">
+                                    <div class="flex items-center space-x-3 flex-1 min-w-0">
+                                        <!-- File Type Icon -->
+                                        <div class="flex-shrink-0">
+                                            {% if file.file_type == 'document' %}
+                                            <svg class="h-8 w-8 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/>
+                                            </svg>
+                                            {% elif file.file_type == 'image' %}
+                                            <svg class="h-8 w-8 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/>
+                                            </svg>
+                                            {% elif file.file_type == 'pdf' %}
+                                            <svg class="h-8 w-8 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/>
+                                            </svg>
+                                            {% else %}
+                                            <svg class="h-8 w-8 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/>
+                                            </svg>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- File Info -->
+                                        <div class="flex-1 min-w-0">
+                                            <div class="flex items-center space-x-2">
+                                                <p class="text-sm font-medium text-gray-900 truncate">{{ file.name }}</p>
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-{{ file.drop_color }}-100 text-{{ file.drop_color }}-800">
+                                                    {{ file.drop_name }}
+                                                </span>
+                                            </div>
+                                            <div class="flex items-center space-x-4 mt-1">
+                                                <p class="text-xs text-gray-500">{{ file.size_mb }} MB</p>
+                                                <p class="text-xs text-gray-500">{{ file.file_type.title() }}</p>
+                                                <p class="text-xs text-gray-500">{{ file.last_modified.strftime('%b %d, %Y') }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Actions -->
+                                    <div class="flex items-center space-x-2">
+                                        <a href="{{ file.download_url }}" 
+                                           class="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200">
+                                            <svg class="h-3 w-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                            </svg>
+                                            Download
+                                        </a>
+                                        <a href="{{ url_for('drop_files', drop_id=file.drop_id) }}" 
+                                           class="inline-flex items-center px-2 py-1 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50">
+                                            <svg class="h-3 w-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                                            </svg>
+                                            View Drop
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                            
+                            {% if not detailed_files %}
+                            <div class="text-center py-12">
+                                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                                <h3 class="mt-2 text-sm font-medium text-gray-900">No files found</h3>
+                                <p class="mt-1 text-sm text-gray-500">Upload files to your drops to see them here.</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- File Management Actions -->
+                {% if user.user_type != 'external' %}
                 <div class="mt-6 bg-white border border-gray-200 rounded-lg p-4">
                     <h4 class="text-sm font-medium text-gray-900 mb-3">File Management</h4>
                     <div class="flex flex-wrap gap-2">
@@ -928,6 +919,7 @@
                         </button>
                     </div>
                 </div>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -1033,10 +1025,12 @@ const inviteExternalUserModal = document.getElementById('inviteExternalUserModal
 const userMenu = document.getElementById('userMenu');
 
 // Create drop functionality
-document.getElementById('createDropBtn').addEventListener('click', () => {
+{% if user.user_type != 'external' %}
+document.getElementById('createDropBtn')?.addEventListener('click', () => {
     createDropModal.classList.remove('hidden');
     document.getElementById('dropName').focus();
 });
+{% endif %}
 
 document.getElementById('emptyCreateDropBtn')?.addEventListener('click', () => {
     createDropModal.classList.remove('hidden');
@@ -1059,6 +1053,109 @@ document.getElementById('recentActivityCard').addEventListener('click', () => {
 document.getElementById('closeRecentActivityModal').addEventListener('click', () => {
     recentActivityModal.classList.add('hidden');
 });
+
+// Date filter functionality for Recent Activity
+document.getElementById('activityDateFilter')?.addEventListener('change', function() {
+    const selectedDays = this.value;
+    const timelineElement = document.getElementById('activityTimeline');
+    
+    // Update the timeline header text
+    const timelineHeader = document.querySelector('#recentActivityModal h4');
+    if (timelineHeader) {
+        timelineHeader.textContent = 'Activity Timeline (Last ' +  selectedDays + ' Days)';
+    }
+    
+    // Show loading state
+    const loadingHtml = `
+        <div class="flex items-center justify-center py-8">
+            <div class="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full"></div>
+            <span class="ml-3 text-gray-600">Loading activities...</span>
+        </div>
+    `;
+    timelineElement.innerHTML = loadingHtml;
+    
+    // Fetch filtered data from server
+    fetch('/api/activity-timeline?days=' + selectedDays)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            
+            // Update timeline with new data
+            updateActivityTimeline(data.activities);
+        })
+        .catch(error => {
+            console.error('Error fetching activity timeline:', error);
+            timelineElement.innerHTML = `
+                <div class="text-center py-8">
+                    <div class="text-red-600 mb-2">
+                        <svg class="h-12 w-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <p class="text-gray-600">Error loading activities</p>
+                </div>
+            `;
+        });
+});
+
+// Function to prototype activity timeline HTML
+function updateActivityTimeline(activities) {
+    const timelineElement = document.getElementById('activityTimeline');
+    
+    if (!activities || activities.length === 0) {
+        timelineElement.innerHTML = `
+            <div class="text-center py-8">
+                <div class="text-gray-400 mb-2">
+                    <svg class="h-12 w-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <p class="text-gray-600">No recent activity</p>
+            </div>
+        `;
+        return;
+    }
+    
+    const getIcon = (type) => {
+        const icons = {
+            'file_upload': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>',
+            'drop_created': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/>',
+            'user_invited': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>',
+            'user_created': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>'
+        };
+        return icons[type] || icons['file_upload'];
+    };
+    
+    const getColorClasses = (color) => {
+        const colors = {
+            'blue': 'bg-blue-500 text-white',
+            'green': 'bg-green-500 text-white',
+            'purple': 'bg-purple-500 text-white',
+            'indigo': 'bg-indigo-500 text-white'
+        };
+        return colors[color] || colors['blue'];
+    };
+    
+    const activitiesHtml = activities.map(activity => `
+        <div class="flex items-start space-x-3 py-3">
+            <div class="flex-shrink-0">
+                <div class="h-8 w-8 rounded-full ${getColorClasses(activity.color)} flex items-center justify-center">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        ${getIcon(activity.type)}
+                    </svg>
+                </div>
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-gray-900">${activity.title}</p>
+                <p class="text-sm text-gray-500">${activity.description}</p>
+            </div>
+        </div>
+    `).join('');
+    
+    timelineElement.innerHTML = activitiesHtml;
+}
 
 // Active Drops modal functionality
 document.getElementById('activeDropsCard').addEventListener('click', () => {
@@ -1142,6 +1239,7 @@ document.getElementById('submitCreateDrop').addEventListener('click', () => {
 });
 
 // External User Invitation modal functionality
+{% if user.user_type != 'external' %}
 document.getElementById('inviteExternalUserBtn')?.addEventListener('click', () => {
     inviteExternalUserModal.classList.remove('hidden');
     document.getElementById('inviteEmail').focus();
@@ -1151,6 +1249,7 @@ document.getElementById('sendFirstInvitationBtn')?.addEventListener('click', () 
     inviteExternalUserModal.classList.remove('hidden');
     document.getElementById('inviteEmail').focus();
 });
+{% endif %}
 
 document.getElementById('closeInviteExternalUserModal').addEventListener('click', () => {
     inviteExternalUserModal.classList.add('hidden');
@@ -1214,6 +1313,74 @@ document.getElementById('submitInviteExternal').addEventListener('click', () => 
     .catch(error => {
         alert(`Error: ${error.message}`);
     });
+});
+
+// File Explorer Search and Filter Functionality
+function initializeFileExplorer() {
+    const searchInput = document.getElementById('fileSearchInput');
+    const dropFilter = document.getElementById('dropFilter');
+    const typeFilter = document.getElementById('typeFilter');
+    const filesList = document.getElementById('filesList');
+
+    function filterFiles() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const selectedDrop = dropFilter.value;
+        const selectedType = typeFilter.value;
+        const fileItems = filesList.querySelectorAll('.file-item');
+
+        fileItems.forEach(item => {
+            const filename = item.dataset.filename;
+            const dropId = item.dataset.drop;
+            const fileType = item.dataset.type;
+
+            const matchesSearch = !searchTerm || filename.includes(searchTerm);
+            const matchesDrop = !selectedDrop || dropId === selectedDrop;
+            const matchesType = !selectedType || fileType === selectedType;
+
+            if (matchesSearch && matchesDrop && matchesType) {
+                item.style.display = 'block';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+
+        // Show/hide empty state
+        const visibleItems = Array.from(fileItems).filter(item => item.style.display !== 'none');
+        const emptyState = filesList.querySelector('.empty-search-state');
+        
+        if (visibleItems.length === 0 && !emptyState) {
+            const emptyDiv = document.createElement('div');
+            emptyDiv.className = 'text-center py-12 empty-search-state';
+            emptyDiv.innerHTML = `
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">No files match your search</h3>
+                <p class="mt-1 text-sm text-gray-500">Try adjusting your search terms or filters.</p>
+            `;
+            filesList.appendChild(emptyDiv);
+        } else if (visibleItems.length > 0 && emptyState) {
+            emptyState.remove();
+        }
+    }
+
+    // Add event listeners
+    if (searchInput) {
+        searchInput.addEventListener('input', filterFiles);
+    }
+    if (dropFilter) {
+        dropFilter.addEventListener('change', filterFiles);
+    }
+    if (typeFilter) {
+        typeFilter.addEventListener('change', filterFiles);
+    }
+}
+
+// Initialize file explorer when the modal opens
+document.getElementById('filesSharedCard').addEventListener('click', () => {
+    filesSharedModal.classList.remove('hidden');
+    // Initialize after modal is visible
+    setTimeout(initializeFileExplorer, 100);
 });
 
 // Close modals when clicking outside

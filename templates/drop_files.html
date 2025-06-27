@@ -147,7 +147,15 @@
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
                             {% for file in files %}
-                            <tr class="hover:bg-gray-50">
+                            <tr class="hover:bg-gray-50 cursor-pointer file-row" 
+                                data-name="{{ file.name }}"
+                                data-type="{{ file.type }}"
+                                data-path="{{ (current_path + '/' + file.name).strip('/') }}"
+                                {% if file.type == 'folder' %}
+                                data-folder-url="{{ url_for('drop_files', drop_id=drop.id, path=(current_path + '/' + file.name).strip('/')) }}"
+                                {% elif file.type == 'file' and 'download' in user_permissions %}
+                                data-download-url="{{ url_for('download_file', file_path=(current_path + '/' + file.name).strip('/')) }}"
+                                {% endif %}>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
                                         {% if file.type == 'folder' %}
@@ -160,14 +168,9 @@
                                             </svg>
                                         {% endif %}
                                         <div>
-                                            {% if file.type == 'folder' %}
-                                                <a href="{{ url_for('drop_files', drop_id=drop.id, path=(current_path + '/' + file.name).strip('/')) }}" 
-                                                   class="text-sm font-medium text-blue-600 hover:text-blue-500">
-                                                    {{ file.name }}
-                                                </a>
-                                            {% else %}
-                                                <span class="text-sm font-medium text-gray-900">{{ file.name }}</span>
-                                            {% endif %}
+                                            <span class="text-sm font-medium {% if file.type == 'folder' %}text-blue-600{% else %}text-gray-900{% endif %}">
+                                                {{ file.name }}
+                                            </span>
                                         </div>
                                     </div>
                                 </td>
@@ -394,6 +397,93 @@ document.getElementById('createFolder').addEventListener('click', async () => {
         }
     } catch (error) {
         alert('Error creating folder');
+    }
+});
+
+// File/folder selection and interaction behavior
+let selectedRow = null;
+
+// Add click handlers for file rows
+document.addEventListener('DOMContentLoaded', function() {
+    const fileRows = document.querySelectorAll('.file-row');
+    
+    fileRows.forEach(row => {
+        let clickTimeout = null;
+        
+        row.addEventListener('click', function(e) {
+            // Prevent event bubbling
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Clear previous timeout if it exists
+            if (clickTimeout) {
+                clearTimeout(clickTimeout);
+                clickTimeout = null;
+                return; // This is a double-click, don't execute single-click
+            }
+            
+            // Set a timeout for single-click
+            clickTimeout = setTimeout(() => {
+                // Single click - select/highlight row
+                selectRow(this);
+                clickTimeout = null;
+            }, 250);
+        });
+        
+        row.addEventListener('dblclick', function(e) {
+            // Prevent event bubbling
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Clear the single-click timeout
+            if (clickTimeout) {
+                clearTimeout(clickTimeout);
+                clickTimeout = null;
+            }
+            
+            // Double click - execute primary action
+            executeRowAction(this);
+        });
+    });
+});
+
+function selectRow(row) {
+    // Remove previous selection
+    if (selectedRow) {
+        selectedRow.classList.remove('bg-blue-50', 'border-blue-200');
+        selectedRow.style.borderLeft = '';
+    }
+    
+    // Select new row
+    selectedRow = row;
+    row.classList.add('bg-blue-50', 'border-blue-200');
+    row.style.borderLeft = '3px solid #3B82F6';
+}
+
+function executeRowAction(row) {
+    const type = row.dataset.type;
+    
+    if (type === 'folder') {
+        const folderUrl = row.dataset.folderUrl;
+        if (folderUrl) {
+            window.location.href = folderUrl;
+        }
+    } else if (type === 'file') {
+        const downloadUrl = row.dataset.downloadUrl;
+        if (downloadUrl) {
+            window.location.href = downloadUrl;
+        }
+    }
+}
+
+// Clear selection when clicking elsewhere
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.file-row')) {
+        if (selectedRow) {
+            selectedRow.classList.remove('bg-blue-50', 'border-blue-200');
+            selectedRow.style.borderLeft = '';
+            selectedRow = null;
+        }
     }
 });
 

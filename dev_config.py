@@ -30,7 +30,7 @@ class DevelopmentConfig:
     TRANSFER_SERVER_ID = os.environ.get('TRANSFER_SERVER_ID')
     
     # Email configuration for development
-    MOCK_EMAIL = os.environ.get('MOCK_EMAIL', 'False').lower() == 'true'
+    # MOCK_EMAIL removed - using real SES emails
     SES_VERIFIED_EMAIL = os.environ.get('SES_VERIFIED_EMAIL', 'dev@example.com')
 
 def setup_dev_environment():
@@ -40,20 +40,13 @@ def setup_dev_environment():
     os.environ['FLASK_ENV'] = 'development'
     os.environ['DEBUG'] = 'True'
     
-    # Email configuration for testing
-    # Option 1: Mock emails (just print to console) - RECOMMENDED FOR TESTING
-    # os.environ['MOCK_EMAIL'] = 'True'  # Back to mock emails for testing
-    
-    # Option 2: Use SES with business email (much better for deliverability!)
-    os.environ['MOCK_EMAIL'] = 'False'
+    # Email configuration - using real SES emails
     os.environ['SES_VERIFIED_EMAIL'] = 'dave@fusedata.co'  # Business email address
     
     print("🔧 Development environment configured:")
     print(f"   FLASK_ENV: {os.environ.get('FLASK_ENV')}")
     print(f"   DEBUG: {os.environ.get('DEBUG')}")
-    print(f"   MOCK_EMAIL: {os.environ.get('MOCK_EMAIL')}")
-    if os.environ.get('SES_VERIFIED_EMAIL'):
-        print(f"   SES_VERIFIED_EMAIL: {os.environ.get('SES_VERIFIED_EMAIL')}")
+    print(f"   SES_VERIFIED_EMAIL: {os.environ.get('SES_VERIFIED_EMAIL')}")
 
 if __name__ == "__main__":
     setup_dev_environment() 
