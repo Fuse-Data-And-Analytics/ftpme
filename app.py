@@ -1239,6 +1239,16 @@ def drops_dashboard():
                          external_users_info=external_users_info,
                          detailed_files=detailed_files)
 
+
+
+
+
+
+
+
+
+
+
 @app.route('/drops/create', methods=['POST'])
 def create_drop():
     """Create a new drop"""
@@ -1445,6 +1455,10 @@ def dashboard():
     except Exception as e:
         flash(f'Error loading dashboard: {str(e)}')
         return redirect(url_for('index'))
+
+
+
+
 
 @app.route('/users/create', methods=['GET', 'POST'])
 def create_user():

@@ -61,9 +61,11 @@
                 </div>
                 <div class="flex items-center">
                     {% if session.get('user_tenant_id') %}
+
                     <a href="{{ url_for('drops_dashboard') }}" class="nav-link px-3 py-2">My Drops</a>
                     <a href="{{ url_for('user_logout') }}" class="nav-link px-3 py-2">Sign Out</a>
                     {% elif session.get('tenant_id') %}
+
                     <a href="{{ url_for('dashboard') }}" class="nav-link px-3 py-2">Dashboard</a>
                     <a href="{{ url_for('create_user') }}" class="nav-link px-3 py-2">Add User</a>
                     <a href="{{ url_for('logout') }}" class="nav-link px-3 py-2">Sign Out</a>
